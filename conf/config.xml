@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Not used yet. Please see convert2mp4.conf -->
+<config>
+   <path>
+      <ffmpeg>/usr/bin/ffmpeg</ffmpeg>
+      <mp4chaps>/usr/bin/mp4chaps</mp4chaps>
+      <flvcheck>/usr/bin/flvcheck</flvcheck>
+      <mediainfo>/usr/bin/mediainfo</mediainfo>
+      <ffprobe>/usr/bin/ffprobe</ffprobe>
+      <exiftool>/usr/bin/exiftool</exiftool>
+      <tmpdir>/tmp</tmpdir>
+   </path>
+   <video>
+      <preset>default</preset>
+   </video>
+   <profiles>
+       <path>profiles-movie-scenes.xml</path>
+   </profiles>
+   <fms>
+      <enabled>0</enabled>
+      <url>rtmp://localhost/vod/media/</url>
+      <content_dir>/opt/adobe/ams/applications/vod/media</content_dir>
+      <html_dir>/opt/adobe/ams/webroot</html_dir>
+   </fms>
+   <flowplayer>
+      <height>480</height>
+   </flowplayer>
+   <name>
+      <suffix>s</suffix>
+   </name>
+</config>
+
+<!-- vim: set et: -->

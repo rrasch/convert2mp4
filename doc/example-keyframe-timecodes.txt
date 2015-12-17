@@ -1,0 +1,8 @@
+# Keyframes will be added to the output file at the
+# timecodes listed below.  The format of the timecode
+# is HH:MM:SS.mmm where HH is hours, MM is minutes,
+# SS is seconds, and mmm is milliseconds
+
+00:00:00.000
+00:00:50.918
+00:12:00.320

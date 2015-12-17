@@ -1,0 +1,55 @@
+# Map ffmpeg options to x264 options
+#
+# Values that end in '!' are flags
+
+g: keyint
+b: bitrate
+bufsize: vbv-bufsize
+maxrate: vbv-maxrate
+pass: pass
+crf: crf
+cqp: qp
+bf: bframes
+coder: cabac!
+b_strategy: b-adapt!
+bframebias: b-bias
+keyint_min: min-keyint
+sc_threshold: scenecut
+deblockalpha: deblock
+deblockbeta: deblock
+qmin: qpmin
+qmax: qpmax
+qdiff: qpstep
+qcomp: qcomp
+qblur: qblur
+complexityblur: cplxblur
+refs: ref
+directpred: direct
+me_method: me
+me_range: merange
+subq: subme
+trellis: trellis
+nr: nr
+level: level
+rc_init_occupancy: vbv-init
+i_qfactor: ipratio
+b_qfactor: pbratio
+chromaoffset: chroma-qp-offset
+rc_eq: rc_eq
+threads: threads
+cmp: chroma-me!
+partitions: partitions
+parti8x8: i8x8
+parti4x4: i4x4
+partp8x8: p8x8
+partp4x4: p4x4
+partb8x8: b8x8
+loop: deblock
+psnr: psnr
+bpyramid: b-pyramid
+wpred: weightb
+mixed_refs: mixed-refs
+dct8x8: 8x8dct
+fastpskip: fast-pskip
+aud: aud
+wpredp: weightp

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles>
+   <profile>
+      <description>Low Movie Scenes</description>
+      <dimensions>autox354</dimensions>
+      <vbitrate>488k</vbitrate>
+      <abitrate>32k</abitrate>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+      <description>Medium Movie Scenes</description>
+      <dimensions>autox480</dimensions>
+      <vbitrate>1000k</vbitrate>
+      <abitrate>32k</abitrate>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+      <description>High Movie Scenes</description>
+      <dimensions>autox480</dimensions>
+      <vbitrate>2500k</vbitrate>
+      <abitrate>32k</abitrate>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+      <description>HD 720 Movie Scenes</description>
+      <dimensions>autox720</dimensions>
+      <vbitrate>5000k</vbitrate>
+      <abitrate>32k</abitrate>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+      <description>HD 1080 Movie Scenes</description>
+      <dimensions>autox1080</dimensions>
+      <vbitrate>8000k</vbitrate>
+      <abitrate>32k</abitrate>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+      <description>Mobile Low Movie Scenes</description>
+      <dimensions>autox234</dimensions>
+      <vbitrate>200k</vbitrate>
+      <abitrate>32k</abitrate>
+      <device>mobile</device>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+      <description>Mobile Medium Movie Scenes</description>
+      <dimensions>autox352</dimensions>
+      <vbitrate>600k</vbitrate>
+      <abitrate>32k</abitrate>
+      <device>mobile</device>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+      <description>Mobile High Movie Scenes</description>
+      <dimensions>autox544</dimensions>
+      <vbitrate>1800k</vbitrate>
+      <abitrate>32k</abitrate>
+      <device>mobile</device>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+      <description>Mobile 720p Movie Scenes</description>
+      <dimensions>autox576</dimensions>
+      <vbitrate>2500k</vbitrate>
+      <abitrate>32k</abitrate>
+      <device>mobile</device>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+      <description>Mobile 1080p Movie Scenes</description>
+      <dimensions>autox576</dimensions>
+      <vbitrate>4500k</vbitrate>
+      <abitrate>32k</abitrate>
+      <enabled>1</enabled>
+   </profile>
+</profiles>

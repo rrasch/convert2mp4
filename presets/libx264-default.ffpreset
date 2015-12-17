@@ -1,0 +1,5 @@
+# $Id: libx264-default.ffpreset 14425 2014-06-16 23:37:45Z rr102 $
+
+# Set keyframe interval or gop: Maxium distance between I-frames.
+g=250
+

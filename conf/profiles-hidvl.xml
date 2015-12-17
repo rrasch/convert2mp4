@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles>
+   <profile>
+			<description>300k</description>
+      <dimensions>autox336</dimensions>
+      <vbitrate>268k</vbitrate>
+      <abitrate>32k</abitrate>
+      <enabled>1</enabled>
+   </profile>
+   <profile>
+			<description>800k</description>
+      <dimensions>autox480</dimensions>
+      <vbitrate>768k</vbitrate>
+      <abitrate>32k</abitrate>
+      <enabled>1</enabled>
+   </profile>
+</profiles>

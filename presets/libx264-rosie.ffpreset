@@ -1,0 +1,5 @@
+# $Id: libx264-rosie.ffpreset 14406 2014-06-05 17:40:08Z rr102 $
+
+# Set keyframe interval or gop: Maxium distance between I-frames.
+g=120
+
