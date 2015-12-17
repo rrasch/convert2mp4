@@ -13,11 +13,13 @@ Group:		Applications/Multimedia
 URL:		https://github.com/rrasch/%{name}
 BuildRoot:	%{_tmppath}/%{name}-root
 BuildArch:	noarch
+BuildRequires:	git
 #Requires:	ams-tools
 Requires:	ffmpeg >= 2.1.6
-Requires:	libmp4v2 = 2.0.0
+#Requires:	libmp4v2 = 2.0.0
 Requires:	mediainfo
 Requires:	perl-Image-ExifTool
+Requires:	vcs
 
 %description
 %{summary}
@@ -38,6 +40,7 @@ chmod 0755 %{buildroot}%{dlibdir}/bin/*
 
 mkdir -p %{buildroot}%{_bindir}
 ln -s ../..%{dlibdir}/bin/convert2mp4.pl %{buildroot}%{_bindir}/convert2mp4
+ln -s ../..%{dlibdir}/bin/create-mp4.rb  %{buildroot}%{_bindir}/create-mp4
 
 rm -r %{buildroot}%{dlibdir}/templates
 
