@@ -15,7 +15,7 @@ BuildRoot:	%{_tmppath}/%{name}-root
 BuildArch:	noarch
 BuildRequires:	git
 #Requires:	ams-tools
-Requires:	ffmpeg >= 2.1.6
+Requires:	ffmpeg >= 2.1.4
 #Requires:	libmp4v2 = 2.0.0
 Requires:	mediainfo
 Requires:	perl-Image-ExifTool
