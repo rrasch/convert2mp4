@@ -67,10 +67,10 @@ ids.each do |id|
   aux_dir  = "#{wip_dir}/#{id}/aux"
   logger.debug "aux_dir:  #{aux_dir}"
   
-  input_files = Dir.glob("#{data_dir}/*.mov")
+  input_files = Dir.glob("#{data_dir}/*.{avi,mkv,mov}")
   input_files.each do |input_file|
     logger.debug "input_file: #{input_file}"
-    basename = File.basename(input_file, ".mov")
+    basename = File.basename(input_file, ".*")
     output_prefix = "#{aux_dir}/#{basename}"
     cmd = "convert2mp4 -q -t "\
           "--profiles_path profiles-#{options[:profile]}.xml "\
