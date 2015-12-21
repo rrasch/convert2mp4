@@ -1,6 +1,7 @@
+%define gitver	.git.%(date +"%Y%m%d")
 %define name	convert2mp4
-%define version	2.0
-%define release	1.dlts%{?dist}
+%define version	3.0
+%define release	1.dlts%{?gitver}%{?dist}
 %define dlibdir	/usr/local/dlib/%{name}
 
 Summary:	Convert video file to mp4 for HIDVL streaming.
@@ -13,10 +14,11 @@ Group:		Applications/Multimedia
 URL:		https://github.com/rrasch/%{name}
 BuildRoot:	%{_tmppath}/%{name}-root
 BuildArch:	noarch
+%if 0%{?fedora} > 0 || 0%{?centos} > 0
 BuildRequires:	git
-#Requires:	ams-tools
+%endif
 Requires:	ffmpeg >= 2.1.4
-#Requires:	libmp4v2 = 2.0.0
+Requires:	flvcheck
 Requires:	mediainfo
 Requires:	perl-Image-ExifTool
 Requires:	vcs
@@ -31,7 +33,6 @@ Requires:	vcs
 %install
 rm -rf %{buildroot}
 
-#git clone %{url}/tags/%{version} %{buildroot}%{dlibdir}
 git clone %{url}.git %{buildroot}%{dlibdir}
 rm -rf %{buildroot}%{dlibdir}/.git
 find %{buildroot}%{dlibdir} -type d | xargs chmod 0755
