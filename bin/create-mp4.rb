@@ -78,6 +78,7 @@ ids.each do |id|
   input_files.each do |input_file|
     logger.debug "input_file: #{input_file}"
     basename = File.basename(input_file, ".*")
+    basename.sub!(/_d$/, '')
     output_prefix = "#{aux_dir}/#{basename}"
     cmd = "convert2mp4"
     if options[:quiet]
