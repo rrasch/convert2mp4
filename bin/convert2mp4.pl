@@ -41,9 +41,6 @@ my %opt = (
 	# Path to ffmpeg
 	path_ffmpeg => "/usr/bin/ffmpeg",
 
-	# Tool to edit chapter info in mp4 file.
-	path_mp4chaps => "/usr/bin/mp4chaps",
-
 	# Tool to check whether file is FMS streamable.
 	path_flvcheck => "/usr/bin/flvcheck",
 
@@ -581,13 +578,6 @@ for my $profile (@profiles)
 	push(@transcode_cmd, $mp4_file);
 
 	sys(@transcode_cmd);
-
-	# Remove chapter markers if they exist.
-	unless (sys($opt{path_mp4chaps}, "--list", $mp4_file) =~
-		/does not contain chapters/)
-	{
-		sys($opt{path_mp4chaps}, "--remove", $mp4_file);
-	}
 
 	# Check to see if file is streamable by flash media server.
 	sys($opt{path_flvcheck}, '-n', $mp4_file);

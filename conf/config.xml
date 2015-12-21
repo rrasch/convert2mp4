@@ -3,7 +3,6 @@
 <config>
    <path>
       <ffmpeg>/usr/bin/ffmpeg</ffmpeg>
-      <mp4chaps>/usr/bin/mp4chaps</mp4chaps>
       <flvcheck>/usr/bin/flvcheck</flvcheck>
       <mediainfo>/usr/bin/mediainfo</mediainfo>
       <ffprobe>/usr/bin/ffprobe</ffprobe>
