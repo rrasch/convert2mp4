@@ -30,8 +30,6 @@ possibly other POSIX/UNIX systems.
 
 %install
 rm -rf %{buildroot}
-echo %{buildroot}
-echo %{_tmppath}
 install -D -m 0755 %{SOURCE0} %{buildroot}%{_bindir}/vcs
 
 %clean
