@@ -4,7 +4,6 @@ require 'logger'
 require 'open3'
 require 'optparse'
 
-
 def do_cmd(cmd, log)
   log.debug "Running '#{cmd}'"
   output, status = Open3.capture2e(cmd)
@@ -17,7 +16,8 @@ def do_cmd(cmd, log)
 end
 
 options = {
-  :profile => "hidvl"
+  :profile => "movie-scenes",
+  :quiet => false,
 }
 
 OptionParser.new do |opts|
@@ -36,6 +36,10 @@ OptionParser.new do |opts|
     options[:extra_args] = e
   end
 
+  opts.on('-q', '--quiet', 'Suppress debugging messages') do
+    options[:quiet] = true
+  end
+
   opts.on('-h', '--help', 'Print help message') do
     puts opts
     exit
@@ -44,6 +48,9 @@ OptionParser.new do |opts|
 end.parse!
 
 logger = Logger.new($stderr)
+if options[:quiet]
+  logger.level = Logger::INFO
+end
 
 if !options[:rstar_dir]
   abort "You must specify an R* directory."
@@ -66,20 +73,21 @@ ids.each do |id|
   logger.debug "data_dir: #{data_dir}"
   aux_dir  = "#{wip_dir}/#{id}/aux"
   logger.debug "aux_dir:  #{aux_dir}"
-  
+
   input_files = Dir.glob("#{data_dir}/*.{avi,mkv,mov}")
   input_files.each do |input_file|
     logger.debug "input_file: #{input_file}"
     basename = File.basename(input_file, ".*")
     output_prefix = "#{aux_dir}/#{basename}"
-    cmd = "convert2mp4 -q -t "\
-          "--profiles_path profiles-#{options[:profile]}.xml "\
+    cmd = "convert2mp4"
+    if options[:quiet]
+      cmd << " -q"
+    end
+    cmd << " --profiles_path profiles-#{options[:profile]}.xml "\
           "#{options[:extra_args]} #{input_file} #{output_prefix}"
     do_cmd(cmd, logger)
     cs_file = "#{aux_dir}/#{basename}_contact_sheet.jpg"
-    # XXX: fix stty warning
-    do_cmd("vcs #{input_file} -o #{cs_file} </dev/null", logger)
+    do_cmd("vcs #{input_file} -o #{cs_file}", logger)
   end
 end
 
-# vim: set ts=2 et:
