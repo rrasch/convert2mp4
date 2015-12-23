@@ -84,8 +84,9 @@ ids.each do |id|
     if options[:quiet]
       cmd << " -q"
     end
-    cmd << " --profiles_path profiles-#{options[:profile]}.xml "\
-          "#{options[:extra_args]} #{input_file} #{output_prefix}"
+    cmd << " --profiles_path profiles-#{options[:profile]}.xml"\
+           " --path_tmpdir /content/prod/rstar/tmp"\
+           " #{options[:extra_args]} #{input_file} #{output_prefix}"
     do_cmd(cmd, logger)
     cs_file = "#{aux_dir}/#{basename}_contact_sheet.jpg"
     do_cmd("vcs #{input_file} -o #{cs_file}", logger)
