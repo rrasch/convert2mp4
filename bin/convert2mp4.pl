@@ -12,6 +12,7 @@
 # https://documentation.apple.com/en/finalcutpro/usermanual/index.html#chapter=106%26section=6%26tasks=true
 # https://wiki.libav.org/Encoding/aac
 # https://trac.ffmpeg.org/wiki/Encode/AAC
+# https://trac.ffmpeg.org/wiki/Encode/H.264
 #
 # Author: Rasan Rasch <rasan@nyu.edu>
 
