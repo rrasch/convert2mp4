@@ -73,8 +73,9 @@ ids.each do |id|
   logger.debug "data_dir: #{data_dir}"
   aux_dir  = "#{wip_dir}/#{id}/aux"
   logger.debug "aux_dir:  #{aux_dir}"
+  log_file = "#{aux_dir}/transcode_#{id}.log"
 
-  input_files = Dir.glob("#{data_dir}/*.{avi,mkv,mov}")
+  input_files = Dir.glob("#{data_dir}/*_d.{avi,mkv,mov,mp4}")
   input_files.each do |input_file|
     logger.debug "input_file: #{input_file}"
     basename = File.basename(input_file, ".*")
@@ -86,7 +87,8 @@ ids.each do |id|
     end
     cmd << " --profiles_path profiles-#{options[:profile]}.xml"\
            " --path_tmpdir /content/prod/rstar/tmp"\
-           " #{options[:extra_args]} #{input_file} #{output_prefix}"
+           " #{options[:extra_args]} #{input_file} #{output_prefix}"\
+           " >> #{log_file} 2>&1"
     do_cmd(cmd, logger)
     cs_file = "#{aux_dir}/#{basename}_contact_sheet.jpg"
     do_cmd("vcs #{input_file} -o #{cs_file}", logger)
