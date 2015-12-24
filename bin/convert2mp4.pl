@@ -95,14 +95,13 @@ $SIG{__WARN__} = sub { $log->logdie(@_) };
 
 my $host = hostname();
 
+my $is_cygwin = $^O =~ /cygwin/i;
+
 # Need this to enable large file support in exiftool
 my $exif_cfg_file = "$app_home/conf/exiftool.conf";
 
 # template html for connecting to flash media server
 my $tmpl_file = "$app_home/templates/fms.html.in";
-
-# set ffmpeg preset directory
-$ENV{FFMPEG_DATADIR} = "$app_home/presets" unless $ENV{FFMPEG_DATADIR};
 
 my $cfg_file = AppConfig->new({GLOBAL => {EXPAND => EXPAND_ALL}});
 my $cfg_cmdl = AppConfig->new({GLOBAL => {EXPAND => EXPAND_ALL}});
@@ -206,6 +205,9 @@ my $tmpdir = tempdir(
 
 $ENV{TMPDIR} = $tmpdir;
 
+# set ffmpeg preset directory
+$ENV{FFMPEG_DATADIR} ||= cygpath("$app_home/presets");
+
 my %wm_coord = (
 	TL => "10:10",
 	TR => "main_w-overlay_w-10:10",
@@ -284,7 +286,7 @@ my $minfo_path = "/Mediainfo/File/track[\@type='Video']";
 my $ffprobe =
   XML::LibXML->load_xml(
     string => sys($opt{path_ffprobe}, '-v', 'quiet', '-print_format',
-      'xml', '-show_streams', $input_file));
+      'xml', '-show_streams', cygpath($input_file)));
 my $ffpath = "/ffprobe/streams/stream[\@codec_type='video']";
 
 my $exif = XML::LibXML->load_xml(
@@ -525,7 +527,18 @@ for my $profile (@profiles)
 	my $force_keyframes = "chapters";
 	$force_keyframes .= ",$timecode_str" if $timecode_str;
 
-	@transcode_cmd = ($opt{path_ffmpeg}, "-i" => $input_file);
+	@transcode_cmd = ($opt{path_ffmpeg});
+
+	if ($opt{quiet})
+	{
+		push(
+			@transcode_cmd,
+			"-nostats",
+			"-loglevel" => "warning",
+		);
+	}
+
+	push(@transcode_cmd, "-i" => cygpath($input_file));
 
 	if ($opt{adelay})
 	{
@@ -576,12 +589,12 @@ for my $profile (@profiles)
 	);
 
 	push(@transcode_cmd, "-t" => 30) if $opt{test};
-	push(@transcode_cmd, $mp4_file);
+	push(@transcode_cmd, cygpath($mp4_file));
 
 	sys(@transcode_cmd);
 
 	# Check to see if file is streamable by flash media server.
-	sys($opt{path_flvcheck}, '-n', $mp4_file);
+	sys($opt{path_flvcheck}, '-n', cygpath($mp4_file));
 
 	$log->debug("Moving $mp4_file to $host:$output_file");
 	move($mp4_file, $output_file)
@@ -664,7 +677,8 @@ sub create_fms_html
 sub sys
 {
 	my @cmd = @_;
-	$log->debug("running command ", join(" ", @cmd));
+	my $cmd_str = join(" ", @cmd);
+	$log->debug("running command '$cmd_str'");
 	my $start_time = time;
 	my ($output, $success, $exit_code) = capture_exec_combined(@cmd);
 	my $end_time = time;
@@ -673,9 +687,21 @@ sub sys
 	$log->trace("output: $output");
 	$log->debug("run time: ", duration_exact($end_time - $start_time));
 	if (!$success && !($cmd[0] =~ /^pgrep/ && $exit_status == 1)) {
-		$log->logdie("The exit status was $exit_status.");
+		$log->logdie("Command '$cmd_str' exited with ",
+			"status: $exit_status, output: $output");
 	}
 	return $output;
+}
+
+
+sub cygpath
+{
+	my $path = shift;
+	if ($is_cygwin) {
+		$path = sys('cygpath', '-w', $path);
+		chomp($path);
+	}
+	return $path;
 }
 
 
