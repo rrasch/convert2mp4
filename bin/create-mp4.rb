@@ -91,7 +91,7 @@ ids.each do |id|
            " >> #{log_file} 2>&1"
     do_cmd(cmd, logger)
     cs_file = "#{aux_dir}/#{basename}_contact_sheet.jpg"
-    do_cmd("vcs #{input_file} -o #{cs_file}", logger)
+    do_cmd("vcs #{input_file} -o #{cs_file} >> #{log_file} 2>&1", logger)
   end
 end
 
