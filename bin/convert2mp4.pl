@@ -206,7 +206,7 @@ my $tmpdir = tempdir(
 $ENV{TMPDIR} = $tmpdir;
 
 # set ffmpeg preset directory
-$ENV{FFMPEG_DATADIR} ||= cygpath("$app_home/presets");
+$ENV{FFMPEG_DATADIR} ||= "$app_home/presets";
 
 my %wm_coord = (
 	TL => "10:10",
@@ -286,7 +286,7 @@ my $minfo_path = "/Mediainfo/File/track[\@type='Video']";
 my $ffprobe =
   XML::LibXML->load_xml(
     string => sys($opt{path_ffprobe}, '-v', 'quiet', '-print_format',
-      'xml', '-show_streams', cygpath($input_file)));
+      'xml', '-show_streams', $input_file));
 my $ffpath = "/ffprobe/streams/stream[\@codec_type='video']";
 
 my $exif = XML::LibXML->load_xml(
@@ -538,7 +538,7 @@ for my $profile (@profiles)
 		);
 	}
 
-	push(@transcode_cmd, "-i" => cygpath($input_file));
+	push(@transcode_cmd, "-i" => $input_file);
 
 	if ($opt{adelay})
 	{
@@ -589,7 +589,7 @@ for my $profile (@profiles)
 	);
 
 	push(@transcode_cmd, "-t" => 30) if $opt{test};
-	push(@transcode_cmd, cygpath($mp4_file));
+	push(@transcode_cmd, $mp4_file);
 
 	sys(@transcode_cmd);
 
