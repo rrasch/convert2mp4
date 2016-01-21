@@ -581,7 +581,7 @@ for my $profile (@profiles)
 		"-profile:a" => $aac_profile,
 		"-ab"        => $audio_bitrate,
 		"-ac"        => 2,
-		"-ar"        => 48000,
+		"-ar"        => 44100,
 		"-cutoff"    => 18000,
 		"-movflags",
 		"+faststart",
