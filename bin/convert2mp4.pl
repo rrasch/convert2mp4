@@ -334,8 +334,10 @@ $log->debug("ffprobe Real Height: $real_height");
 $log->debug("ffprobe SAR string: $sar_str");
 $log->debug(sprintf("ffprobe SAR: %.5f", $sar));
 
-my $src_width  = val($minfo, "$minfo_path/Width");
-my $src_height = val($minfo, "$minfo_path/Height");
+my $src_width  = val($minfo, "$minfo_path/Width_CleanAperture")
+  || val($minfo, "$minfo_path/Width");
+my $src_height = val($minfo, "$minfo_path/Height_CleanAperture")
+  || val($minfo, "$minfo_path/Height");
 my $scan_type  = val($minfo, "$minfo_path/ScanType");
 my $chroma     = val($minfo, "$minfo_path/ChromaSubsampling");
 $log->debug("mediainfo Width: $src_width");
