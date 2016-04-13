@@ -12,6 +12,7 @@
 # https://documentation.apple.com/en/finalcutpro/usermanual/index.html#chapter=106%26section=6%26tasks=true
 # https://wiki.libav.org/Encoding/aac
 # https://trac.ffmpeg.org/wiki/Encode/AAC
+# https://trac.ffmpeg.org/wiki/Encode/H.264
 #
 # Author: Rasan Rasch <rasan@nyu.edu>
 
@@ -94,14 +95,13 @@ $SIG{__WARN__} = sub { $log->logdie(@_) };
 
 my $host = hostname();
 
+my $is_cygwin = $^O =~ /cygwin/i;
+
 # Need this to enable large file support in exiftool
 my $exif_cfg_file = "$app_home/conf/exiftool.conf";
 
 # template html for connecting to flash media server
 my $tmpl_file = "$app_home/templates/fms.html.in";
-
-# set ffmpeg preset directory
-$ENV{FFMPEG_DATADIR} = "$app_home/presets" unless $ENV{FFMPEG_DATADIR};
 
 my $cfg_file = AppConfig->new({GLOBAL => {EXPAND => EXPAND_ALL}});
 my $cfg_cmdl = AppConfig->new({GLOBAL => {EXPAND => EXPAND_ALL}});
@@ -204,6 +204,9 @@ my $tmpdir = tempdir(
 );
 
 $ENV{TMPDIR} = $tmpdir;
+
+# set ffmpeg preset directory
+$ENV{FFMPEG_DATADIR} ||= "$app_home/presets";
 
 my %wm_coord = (
 	TL => "10:10",
@@ -331,8 +334,10 @@ $log->debug("ffprobe Real Height: $real_height");
 $log->debug("ffprobe SAR string: $sar_str");
 $log->debug(sprintf("ffprobe SAR: %.5f", $sar));
 
-my $src_width  = val($minfo, "$minfo_path/Width");
-my $src_height = val($minfo, "$minfo_path/Height");
+my $src_width  = val($minfo, "$minfo_path/Width_CleanAperture")
+  || val($minfo, "$minfo_path/Width");
+my $src_height = val($minfo, "$minfo_path/Height_CleanAperture")
+  || val($minfo, "$minfo_path/Height");
 my $scan_type  = val($minfo, "$minfo_path/ScanType");
 my $chroma     = val($minfo, "$minfo_path/ChromaSubsampling");
 $log->debug("mediainfo Width: $src_width");
@@ -524,7 +529,18 @@ for my $profile (@profiles)
 	my $force_keyframes = "chapters";
 	$force_keyframes .= ",$timecode_str" if $timecode_str;
 
-	@transcode_cmd = ($opt{path_ffmpeg}, "-i" => $input_file);
+	@transcode_cmd = ($opt{path_ffmpeg});
+
+	if ($opt{quiet})
+	{
+		push(
+			@transcode_cmd,
+			"-nostats",
+			"-loglevel" => "warning",
+		);
+	}
+
+	push(@transcode_cmd, "-i" => $input_file);
 
 	if ($opt{adelay})
 	{
@@ -567,7 +583,7 @@ for my $profile (@profiles)
 		"-profile:a" => $aac_profile,
 		"-ab"        => $audio_bitrate,
 		"-ac"        => 2,
-		"-ar"        => 48000,
+		"-ar"        => 44100,
 		"-cutoff"    => 18000,
 		"-movflags",
 		"+faststart",
@@ -580,7 +596,7 @@ for my $profile (@profiles)
 	sys(@transcode_cmd);
 
 	# Check to see if file is streamable by flash media server.
-	sys($opt{path_flvcheck}, '-n', $mp4_file);
+	sys($opt{path_flvcheck}, '-n', cygpath($mp4_file));
 
 	$log->debug("Moving $mp4_file to $host:$output_file");
 	move($mp4_file, $output_file)
@@ -663,7 +679,8 @@ sub create_fms_html
 sub sys
 {
 	my @cmd = @_;
-	$log->debug("running command ", join(" ", @cmd));
+	my $cmd_str = join(" ", @cmd);
+	$log->debug("running command '$cmd_str'");
 	my $start_time = time;
 	my ($output, $success, $exit_code) = capture_exec_combined(@cmd);
 	my $end_time = time;
@@ -672,9 +689,21 @@ sub sys
 	$log->trace("output: $output");
 	$log->debug("run time: ", duration_exact($end_time - $start_time));
 	if (!$success && !($cmd[0] =~ /^pgrep/ && $exit_status == 1)) {
-		$log->logdie("The exit status was $exit_status.");
+		$log->logdie("Command '$cmd_str' exited with ",
+			"status: $exit_status, output: $output");
 	}
 	return $output;
+}
+
+
+sub cygpath
+{
+	my $path = shift;
+	if ($is_cygwin) {
+		$path = sys('cygpath', '-w', $path);
+		chomp($path);
+	}
+	return $path;
 }
 
 

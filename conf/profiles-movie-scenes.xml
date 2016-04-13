@@ -72,6 +72,7 @@
       <dimensions>autox576</dimensions>
       <vbitrate>4500k</vbitrate>
       <abitrate>32k</abitrate>
+      <device>mobile</device>
       <enabled>1</enabled>
    </profile>
 </profiles>
