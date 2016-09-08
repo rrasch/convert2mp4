@@ -304,22 +304,10 @@ for my $ns ($exif->findnodes('./namespace::*'))
 	last if $is_track_info = $prefix =~ /^Track/;
 }
 
-
-my $clean_ap_dimensions;
-my $prod_ap_dimensions;
-my $enc_pix_dimensions;
-
-if ($is_track_info)
-{
-	$clean_ap_dimensions =
-	  val($exif, "./Track$track_id:CleanApertureDimensions");
-	$prod_ap_dimensions =
-	  val($exif, "./Track$track_id:ProductionApertureDimensions");
-	$enc_pix_dimensions =
-	  val($exif, "./Track$track_id:EncodedPixelsDimensions");
-	$log->debug("Clean Aperture Dimensions:      $clean_ap_dimensions");
-	$log->debug("Production Aperture Dimensions: $prod_ap_dimensions");
-	$log->debug("Encoded Pixels Dimensions:      $enc_pix_dimensions");
+my $track_exists;
+eval { $track_exists = val($exif, "./Track$track_id:TrackID"); };
+if ($@) {
+	$log->warn($@);
 }
 
 my $ff_video_idx  = val($ffprobe, "$ffpath/\@index");
@@ -327,12 +315,12 @@ my $ff_audio_idx  = val($ffprobe, "/ffprobe/streams/stream[\@codec_type='audio']
 my $real_width   = val($ffprobe, "$ffpath/\@width");
 my $real_height  = val($ffprobe, "$ffpath/\@height");
 my $pixel_format = val($ffprobe, "$ffpath/\@pix_fmt");
-my $sar_str      = val($ffprobe, "$ffpath/\@sample_aspect_ratio");
-my $sar          = str2float($sar_str);
+my $par_str      = val($ffprobe, "$ffpath/\@sample_aspect_ratio");
+my $par          = str2float($par_str);
 $log->debug("ffprobe Real Width: $real_width");
 $log->debug("ffprobe Real Height: $real_height");
-$log->debug("ffprobe SAR string: $sar_str");
-$log->debug(sprintf("ffprobe SAR: %.5f", $sar));
+$log->debug("ffprobe PAR string: $par_str");
+$log->debug(sprintf("ffprobe PAR: %.5f", $par));
 
 my $src_width  = val($minfo, "$minfo_path/Width_CleanAperture")
   || val($minfo, "$minfo_path/Width");
@@ -345,30 +333,71 @@ $log->debug("mediainfo Height: $src_height");
 $log->debug("Scan Type: $scan_type");
 $log->debug("Chroma Subsampling: $chroma");
 
-if ($sar == 0)
-{
-	my $dar_str = val($minfo, "$minfo_path/DisplayAspectRatio_String");
-	my $dar = str2float($dar_str);
-	my $par = val($minfo, "$minfo_path/PixelAspectRatio");
-	$sar = $dar / $par;
-	$log->debug(sprintf("mediainfo DAR: %.5f", $dar));
-	$log->debug("mediainfo PAR: $par");
-	$log->debug(sprintf("mediainfo SAR: %.5f", $sar));
-}
+# if ($sar == 0)
+# {
+# 	my $dar_str = val($minfo, "$minfo_path/DisplayAspectRatio_String");
+# 	my $dar = str2float($dar_str);
+# 	my $par = val($minfo, "$minfo_path/PixelAspectRatio");
+# 	$sar = $dar / $par;
+# 	$log->debug(sprintf("mediainfo DAR: %.5f", $dar));
+# 	$log->debug("mediainfo PAR: $par");
+# 	$log->debug(sprintf("mediainfo SAR: %.5f", $sar));
+# }
 
 my $is_interlaced = $scan_type =~ /interlace/i;
 
 my $flowplayer_width =
-  round_even(($opt{flowplayer_height} / $src_height) * $src_width * $sar);
+  round_even(($opt{flowplayer_height} / $src_height) * $src_width * $par);
 $log->debug(
 	"Flowplayer Dimensions: ${flowplayer_width}x$opt{flowplayer_height}");
 
+my $calc_crop_width = 1;
+my $clean_ap_dimensions = "";
+my $prod_ap_dimensions = "";
+my $enc_pix_dimensions = "";
+
+if ($track_exists)
+{
+	$clean_ap_dimensions =
+	  val($exif, "./Track$track_id:CleanApertureDimensions");
+	$prod_ap_dimensions =
+	  val($exif, "./Track$track_id:ProductionApertureDimensions");
+	$enc_pix_dimensions =
+	  val($exif, "./Track$track_id:EncodedPixelsDimensions");
+}
+
+if (!$clean_ap_dimensions)
+{
+	$calc_crop_width = 0;
+	my $clean_ap_width  = val($minfo, "$minfo_path/Width_CleanAperture");
+	my $clean_ap_height = val($minfo, "$minfo_path/Height_CleanAperture");
+	if ($clean_ap_width && $clean_ap_height)
+	{
+		$clean_ap_dimensions = $clean_ap_width . 'x' . $clean_ap_height;
+	}
+	$enc_pix_dimensions =
+	    val($minfo, "$minfo_path/Width") . 'x'
+	  . val($minfo, "$minfo_path/Height");
+}
+
+$log->debug("Clean Aperture Dimensions:      $clean_ap_dimensions");
+$log->debug("Production Aperture Dimensions: $prod_ap_dimensions");
+$log->debug("Encoded Pixels Dimensions:      $enc_pix_dimensions");
+
 my $crop_filter_params;
-if ($clean_ap_dimensions && $clean_ap_dimensions ne $enc_pix_dimensions)
+if (   $clean_ap_dimensions
+	&& $enc_pix_dimensions
+	&& $clean_ap_dimensions ne $enc_pix_dimensions)
 {
 	my ($clean_width, $clean_height) = split(/x/, $clean_ap_dimensions);
 
-	my $crop_width  = round_even((1 / $sar) * $clean_width);
+	my $crop_width;
+	if ($calc_crop_width) {
+		$crop_width = round_even((1 / $par) * $clean_width);
+	} else {
+		$crop_width = $clean_width;
+	}
+
 	my $crop_height = $clean_height;
 
 	my $src_dim  = $src_width  . 'x' . $src_height;
