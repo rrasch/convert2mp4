@@ -52,7 +52,7 @@ my %opt = (
 	path_ffprobe => "/usr/bin/ffprobe",
 	
 	# Tool to extract techmd, specifically clean
-	# aperature quicktime movie settings.
+	# aperture quicktime movie settings.
 	path_exiftool => "/usr/bin/exiftool",
 
 	# Directory for intermediate files
