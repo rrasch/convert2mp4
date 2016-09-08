@@ -92,7 +92,7 @@ ids.each do |id|
     do_cmd(cmd, logger)
     cs_file = "#{aux_dir}/#{basename}_contact_sheet.jpg"
     if !File.file?(cs_file)
-      do_cmd("vcs -q -Wc -o #{cs_file} #{input_file} >> #{log_file} 2>&1",
+      do_cmd("vcs -q -Wc -n 8 -o #{cs_file} #{input_file} >> #{log_file} 2>&1",
         logger)
     end
   end
