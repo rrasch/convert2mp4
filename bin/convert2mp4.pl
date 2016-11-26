@@ -333,6 +333,10 @@ $log->debug("mediainfo Height: $src_height");
 $log->debug("Scan Type: $scan_type");
 $log->debug("Chroma Subsampling: $chroma");
 
+my $square_width = round_even($src_width * $par);
+my $square_height = $src_height;
+$log->debug("Square pixel width: ${square_width}x${square_height}");
+
 # if ($sar == 0)
 # {
 # 	my $dar_str = val($minfo, "$minfo_path/DisplayAspectRatio_String");
@@ -471,8 +475,8 @@ for my $profile (@profiles)
 
 	my ($max_width, $max_height) = split("x", $video_dimensions);
 	
-	my $ratio_w = $max_width  / $src_width;
-	my $ratio_h = $max_height / $src_height;
+	my $ratio_w = $max_width  / $square_width;
+	my $ratio_h = $max_height / $square_height;
 	$log->trace("Ratio width: $ratio_w");
 	$log->trace("Ratio height: $ratio_h");
 
@@ -486,8 +490,8 @@ for my $profile (@profiles)
 	}
 	$log->debug("Scale Ratio: $scale_ratio");
 
-	my $width  = round_even($src_width  * $scale_ratio);
-	my $height = round_even($src_height * $scale_ratio);
+	my $width  = round_even($square_width  * $scale_ratio);
+	my $height = round_even($square_height * $scale_ratio);
 
 	$video_dimensions = $width . "x" . $height;
 
@@ -495,7 +499,7 @@ for my $profile (@profiles)
 	{
 		$log->warn("Output dimensions ($video_dimensions) are ",
 			"greater than original dimensions ",
-			"(${src_width}x${src_height}).");
+			"(${square_width}x${square_height}).");
 	}
 
 	$log->debug("New Dimensions: $video_dimensions");
@@ -549,7 +553,7 @@ for my $profile (@profiles)
 	  "movie=$wm_file,scale=$wm_width:-1 [watermark]; [in] "
 	  if $opt{watermark};
 	$video_filter .= "crop=$crop_filter_params," if $crop_filter_params;
-	$video_filter .= "scale=$width:$height";
+	$video_filter .= "scale=$width:$height,setsar=1:1";
 	$video_filter .=
 	    " [tmp];  [tmp][watermark]"
 	  . " overlay=$wm_coord{$wm_orientation} [out]"
