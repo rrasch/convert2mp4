@@ -1,77 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <profiles>
    <profile>
-			<description>Low Talking Heads</description>
+      <description>Low Talking Heads</description>
       <dimensions>autox354</dimensions>
-      <vbitrate>384k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>1000k</vbitrate>
+      <abitrate>128k</abitrate>
       <enabled>1</enabled>
    </profile>
    <profile>
-			<description>Medium Talking Heads</description>
+      <description>Medium Talking Heads</description>
       <dimensions>autox480</dimensions>
-      <vbitrate>688k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>1000k</vbitrate>
+      <abitrate>128k</abitrate>
       <enabled>1</enabled>
    </profile>
    <profile>
-			<description>High Talking Heads</description>
+      <description>High Talking Heads</description>
       <dimensions>autox480</dimensions>
-      <vbitrate>1488k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>3000k</vbitrate>
+      <abitrate>128k</abitrate>
       <enabled>1</enabled>
    </profile>
    <profile>
-			<description>HD 720 Talking Heads</description>
+      <description>HD 720 Talking Heads</description>
       <dimensions>autox720</dimensions>
-      <vbitrate>3500k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>7500k</vbitrate>
+      <abitrate>128k</abitrate>
       <enabled>1</enabled>
    </profile>
    <profile>
-			<description>HD 1080 Talking Heads</description>
+      <description>HD 1080 Talking Heads</description>
       <dimensions>autox1080</dimensions>
-      <vbitrate>5000k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>10000k</vbitrate>
+      <abitrate>128k</abitrate>
       <enabled>1</enabled>
    </profile>
    <profile>
-			<description>Mobile Low Talking Heads</description>
+      <description>Mobile Low Talking Heads</description>
       <dimensions>autox234</dimensions>
-      <vbitrate>110k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>800k</vbitrate>
+      <abitrate>128k</abitrate>
       <device>mobile</device>
       <enabled>1</enabled>
    </profile>
    <profile>
-			<description>Mobile Medium Talking Heads</description>
+      <description>Mobile Medium Talking Heads</description>
       <dimensions>autox352</dimensions>
-      <vbitrate>400k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>800k</vbitrate>
+      <abitrate>128k</abitrate>
       <device>mobile</device>
       <enabled>1</enabled>
    </profile>
    <profile>
-			<description>Mobile High Talking Heads</description>
+      <description>Mobile High Talking Heads</description>
       <dimensions>autox544</dimensions>
-      <vbitrate>1200k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>2400k</vbitrate>
+      <abitrate>128k</abitrate>
       <device>mobile</device>
       <enabled>1</enabled>
    </profile>
    <profile>
-			<description>Mobile 720p Talking Heads</description>
+      <description>Mobile 720p Talking Heads</description>
       <dimensions>autox576</dimensions>
-      <vbitrate>2500k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>6000k</vbitrate>
+      <abitrate>128k</abitrate>
       <device>mobile</device>
       <enabled>1</enabled>
    </profile>
    <profile>
-			<description>Mobile 1080p Talking Heads</description>
+      <description>Mobile 1080p Talking Heads</description>
       <dimensions>autox576</dimensions>
-      <vbitrate>4500k</vbitrate>
-      <abitrate>32k</abitrate>
+      <vbitrate>8000k</vbitrate>
+      <abitrate>128k</abitrate>
       <device>mobile</device>
       <enabled>1</enabled>
    </profile>
