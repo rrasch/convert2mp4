@@ -317,10 +317,22 @@ my $real_height  = val($ffprobe, "$ffpath/\@height");
 my $pixel_format = val($ffprobe, "$ffpath/\@pix_fmt");
 my $par_str      = val($ffprobe, "$ffpath/\@sample_aspect_ratio");
 my $par          = str2float($par_str);
+my $dar_str      = val($ffprobe, "$ffpath/\@display_aspect_ratio");
+my $dar          = str2float($dar_str);
 $log->debug("ffprobe Real Width: $real_width");
 $log->debug("ffprobe Real Height: $real_height");
 $log->debug("ffprobe PAR string: $par_str");
 $log->debug(sprintf("ffprobe PAR: %.5f", $par));
+$log->debug("ffprobe DAR string: $dar_str");
+$log->debug(sprintf("ffprobe DAR: %.5f", $dar));
+
+# if sample and display aspect ratio are undefined in ffprobe
+# get value from mediainfo
+if ($par_str eq "0:1" && $dar_str eq "0:1")
+{
+	$par = val($minfo, "$minfo_path/PixelAspectRatio");
+	$log->debug("mediainfo PAR: $par");
+}
 
 my $src_width  = val($minfo, "$minfo_path/Width_CleanAperture")
   || val($minfo, "$minfo_path/Width");
