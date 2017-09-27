@@ -429,7 +429,9 @@ if (   $clean_ap_dimensions
 	my $diff_h = $real_height - $crop_height;
 
 	$crop_filter_params =
-	  "$crop_width:$crop_height:" . round($diff_w / 2) . ":$diff_h";
+	    "$crop_width:$crop_height:"
+	  . round($diff_w / 2) . ':'
+	  . round($diff_h / 2);
 
 	$log->debug("Crop filter paramters: $crop_filter_params");
 }
