@@ -1,6 +1,6 @@
 %define gitver	.git.%(date +"%Y%m%d")
 %define name	convert2mp4
-%define version	3.0.2
+%define version	3.0.3
 %define release	1.dlts%{?gitver}%{?dist}
 %define dlibdir	/usr/local/dlib/%{name}
 

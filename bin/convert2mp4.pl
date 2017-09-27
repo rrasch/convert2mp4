@@ -409,7 +409,7 @@ if (   $clean_ap_dimensions
 
 	my $crop_width;
 	if ($calc_crop_width) {
-		$crop_width = round_even((1 / $par) * $clean_width);
+		$crop_width = round((1 / $par) * $clean_width);
 	} else {
 		$crop_width = $clean_width;
 	}
@@ -429,7 +429,7 @@ if (   $clean_ap_dimensions
 	my $diff_h = $real_height - $crop_height;
 
 	$crop_filter_params =
-	  "$crop_width:$crop_height:" . round_even($diff_w / 2) . ":$diff_h";
+	  "$crop_width:$crop_height:" . round($diff_w / 2) . ":$diff_h";
 
 	$log->debug("Crop filter paramters: $crop_filter_params");
 }
@@ -671,6 +671,15 @@ if ($opt{fms_enabled})
 }
 
 
+sub round
+{
+	my $number = shift;
+	my $integer = sprintf("%.0f", $number);
+	$log->trace("Rounded $number to nearest integer $integer");
+	return $integer;
+}
+
+
 sub round_even
 {
 	my $number = shift;
@@ -730,6 +739,9 @@ sub sys
 	my ($output, $success, $exit_code) = capture_exec_combined(@cmd);
 	my $end_time = time;
 	$output =~ s/\r/\n/g;  # replace carriage returns with newlines
+	$output =~
+	  s/[^\x9\xA\xD\x20-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]+//g
+	  if $output =~ /<\?xml version=/;
 	my $exit_status = $exit_code >> 8;
 	$log->trace("output: $output");
 	$log->debug("run time: ", duration_exact($end_time - $start_time));
