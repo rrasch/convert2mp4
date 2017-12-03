@@ -567,7 +567,7 @@ for my $profile (@profiles)
 	  "movie=$wm_file,scale=$wm_width:-1 [watermark]; [in] "
 	  if $opt{watermark};
 	$video_filter .= "crop=$crop_filter_params," if $crop_filter_params;
-	$video_filter .= "scale=$width:$height,setsar=1:1";
+	$video_filter .= "scale=$width:$height,setsar=1/1";
 	$video_filter .=
 	    " [tmp];  [tmp][watermark]"
 	  . " overlay=$wm_coord{$wm_orientation} [out]"
@@ -741,8 +741,9 @@ sub sys
 	my ($output, $success, $exit_code) = capture_exec_combined(@cmd);
 	my $end_time = time;
 	$output =~ s/\r/\n/g;  # replace carriage returns with newlines
+	# remove invalid xml characters
 	$output =~
-	  s/[^\x9\xA\xD\x20-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]+//g
+	  s/[^\x09\x0A\x0D\x20-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]+//g
 	  if $output =~ /<\?xml version=/;
 	my $exit_status = $exit_code >> 8;
 	$log->trace("output: $output");
