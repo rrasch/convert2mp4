@@ -1,6 +1,6 @@
 %define gitver	.git.%(date +"%Y%m%d")
 %define name	convert2mp4
-%define version	3.0.4
+%define version	3.0.6
 %define release	1.dlts%{?gitver}%{?dist}
 %define dlibdir	/usr/local/dlib/%{name}
 
@@ -44,6 +44,8 @@ ln -s ../..%{dlibdir}/bin/convert2mp4.pl %{buildroot}%{_bindir}/convert2mp4
 ln -s ../..%{dlibdir}/bin/create-mp4.rb  %{buildroot}%{_bindir}/create-mp4
 
 rm -r %{buildroot}%{dlibdir}/templates
+
+mv %{buildroot}%{dlibdir}/README.md %{buildroot}%{dlibdir}/doc
 
 %clean
 rm -rf %{buildroot}

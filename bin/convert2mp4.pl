@@ -103,6 +103,8 @@ my $exif_cfg_file = "$app_home/conf/exiftool.conf";
 # template html for connecting to flash media server
 my $tmpl_file = "$app_home/templates/fms.html.in";
 
+my @args = @ARGV;
+
 my $cfg_file = AppConfig->new({GLOBAL => {EXPAND => EXPAND_ALL}});
 my $cfg_cmdl = AppConfig->new({GLOBAL => {EXPAND => EXPAND_ALL}});
 
@@ -156,7 +158,7 @@ for my $cfg ($cfg_file, $cfg_cmdl)
 	}
 }
 
-$log->trace("Script invocation: $this_script ", join(" ", @ARGV));
+$log->trace("Script invocation: $this_script ", join(" ", @args));
 
 $log->trace('Options: ', Dumper(\%opt));
 
@@ -453,6 +455,11 @@ for my $profile_xml_file (@profile_paths)
 	push(@profiles, $profile_cfg->findnodes('/profiles/profile'));
 }
 
+# my $num_channels = val($minfo, '//Channel_s_');
+# $log->trace("$num_channels audio channels");
+# my $default_audio_bitrate = ($num_channels * 64) . 'k';
+# $log->trace("Default audio bitrate: $audio_bitrate");
+
 for my $profile (@profiles)
 {
 	next unless val($profile, './enabled');
@@ -473,16 +480,26 @@ for my $profile (@profiles)
 
 	my $h264_profile;
 	my $h264_level;
-	my $aac_profile;
 	if ($video_device && $video_device =~ /mobile/i) {
 		$h264_profile  = "main";
 		$h264_level    = "3.1";
-		# Apple HTTP Live Streaming doesn't seem to work with HE-AAC v2
-		$aac_profile   = "aac_he";
 	} else {
 		$h264_profile  = "high";
 		$h264_level    = "4.1";
-		$aac_profile   = "aac_low";
+	}
+
+	# Adobe Media Server and Apple HTTP Live Streaming didn't
+	# work with HE-AAC v2 in my tests so we don't set
+	# $aac_profle to "aac_he_v2" for bitrates below 48k.  We
+	# just stick with "aac_he".
+	(my $abitrate = $audio_bitrate) =~ s/k$//;
+	my $aac_profile;
+	if ($abitrate >= 64) {
+		$aac_profile = "aac_low";
+# 	} elsif ($abitrate <= 48) {
+# 		$aac_profile = "aac_he_v2";
+	} else {
+		$aac_profile = "aac_he";
 	}
 
 	$video_dimensions =~ s/auto/-1/;
