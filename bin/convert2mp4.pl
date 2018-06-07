@@ -55,8 +55,11 @@ my %opt = (
 	# aperture quicktime movie settings.
 	path_exiftool => "/usr/bin/exiftool",
 
+	# Tool to write metadata tags to mp4 files
+	path_atomicparsley => "/usr/bin/AtomicParsley",
+
 	# Directory for intermediate files
-	path_tmpdir => "/tmp",
+	path_tmpdir => "/content/prod/rstar/tmp",
 
 	# Video encoding options
 	video_preset => "default",
@@ -469,6 +472,7 @@ for my $profile (@profiles)
 	my $video_bitrate    = val($profile, './vbitrate');
 	my $video_bufsize    = val($profile, './vbufsize');
 	my $audio_bitrate    = val($profile, './abitrate');
+	my $audio_samp_freq  = val($profile, './asampfreq') || '44.1kHz';
 
 	# set bufsize to double bitrate if not set
 	if (!$video_bufsize)
@@ -477,6 +481,9 @@ for my $profile (@profiles)
 		$video_bufsize *= 2;
 		$video_bufsize .= 'k';
 	}
+
+	$audio_samp_freq =~ s/\s*kHz$//i;
+	$audio_samp_freq *= 1000;
 
 	my $h264_profile;
 	my $h264_level;
@@ -547,7 +554,7 @@ for my $profile (@profiles)
 	$log->debug("Total bitrate: $total_bitrate");
 
 	my $output_file = "${output_prefix}_${total_bitrate}";
-	$output_file .= "_$video_device" if $video_device;
+# 	$output_file .= "_$video_device" if $video_device;
 	$output_file .= "_$opt{name_suffix}" if $opt{name_suffix};
 	$output_file .= ".mp4";
 	push(@output_files, $output_file);
@@ -647,7 +654,7 @@ for my $profile (@profiles)
 		"-profile:a" => $aac_profile,
 		"-ab"        => $audio_bitrate,
 		"-ac"        => 2,
-		"-ar"        => 44100,
+		"-ar"        => $audio_samp_freq,
 		"-cutoff"    => 18000,
 		"-movflags",
 		"+faststart",
@@ -658,6 +665,15 @@ for my $profile (@profiles)
 	push(@transcode_cmd, $mp4_file);
 
 	sys(@transcode_cmd);
+
+	if (-x $opt{path_atomicparsley})
+	{
+		sys(
+			$opt{path_atomicparsley}, $mp4_file, '--overWrite',
+			'--encodingTool', 'https://github.com/rrasch/convert2mp4',
+			'--encodedBy',    'rasan@nyu.edu',
+		   );
+	}
 
 	# Check to see if file is streamable by flash media server.
 	sys($opt{path_flvcheck}, '-n', cygpath($mp4_file));
