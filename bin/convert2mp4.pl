@@ -18,6 +18,7 @@
 
 use strict;
 use warnings;
+use version;
 use AppConfig qw(:expand);
 use Cwd qw(abs_path);
 use Data::Dumper;
@@ -286,7 +287,34 @@ my @mediainfo_cmd = ($opt{path_mediainfo}, "-f",  "--Language=raw");
 my $minfo =
   XML::LibXML->load_xml(
 	string => sys(@mediainfo_cmd, "--Output=XML", $input_file));
-my $minfo_path = "/Mediainfo/File/track[\@type='Video']";
+
+my ($minfo_version) = sys($opt{path_mediainfo}, '--Version') =~ /v([\d.]+)/;
+$log->trace("Mediainfo version: $minfo_version");
+
+my $minfo_path;
+my $chan_path;
+my $xpc;
+my $ns_prefix = "";
+if (version->parse($minfo_version) <= version->parse('0.7.99'))
+{
+	$minfo_path = "/Mediainfo/File/track[\@type='Video']/";
+	$chan_path  = "//Channel_s_";
+}
+else
+{
+	$ns_prefix = 'm';
+	$xpc       = XML::LibXML::XPathContext->new();
+	$log->trace("Registering mediainfo namespace.");
+	$xpc->registerNs($ns_prefix, "https://mediaarea.net/mediainfo");
+	$ns_prefix = "$ns_prefix:";
+	$minfo_path =
+	    "/${ns_prefix}MediaInfo/${ns_prefix}media/"
+	  . "${ns_prefix}track[\@type='Video']/${ns_prefix}";
+	$chan_path = "//${ns_prefix}Channels";
+}
+
+$log->trace("Mediainfo xpath: $minfo_path");
+
 
 my $ffprobe =
   XML::LibXML->load_xml(
@@ -299,7 +327,7 @@ my $exif = XML::LibXML->load_xml(
 		$opt{path_exiftool}, '-config', $exif_cfg_file, '-X', $input_file));
 ($exif) = $exif->findnodes("/rdf:RDF/rdf:Description");
 
-my $track_id = val($minfo, "$minfo_path/ID");
+my $track_id = val($minfo, "${minfo_path}ID", $xpc);
 $log->debug("Video Track ID: $track_id");
 
 my $is_track_info;
@@ -316,14 +344,15 @@ if ($@) {
 }
 
 my $ff_video_idx  = val($ffprobe, "$ffpath/\@index");
-my $ff_audio_idx  = val($ffprobe, "/ffprobe/streams/stream[\@codec_type='audio']/\@index");
-my $real_width   = val($ffprobe, "$ffpath/\@width");
-my $real_height  = val($ffprobe, "$ffpath/\@height");
-my $pixel_format = val($ffprobe, "$ffpath/\@pix_fmt");
-my $par_str      = val($ffprobe, "$ffpath/\@sample_aspect_ratio");
-my $par          = str2float($par_str);
-my $dar_str      = val($ffprobe, "$ffpath/\@display_aspect_ratio");
-my $dar          = str2float($dar_str);
+my $ff_audio_idx  = val($ffprobe, "/ffprobe/streams/stream"
+                                . "[\@codec_type='audio']/\@index");
+my $real_width    = val($ffprobe, "$ffpath/\@width");
+my $real_height   = val($ffprobe, "$ffpath/\@height");
+my $pixel_format  = val($ffprobe, "$ffpath/\@pix_fmt");
+my $par_str       = val($ffprobe, "$ffpath/\@sample_aspect_ratio");
+my $par           = str2float($par_str);
+my $dar_str       = val($ffprobe, "$ffpath/\@display_aspect_ratio");
+my $dar           = str2float($dar_str);
 $log->debug("ffprobe Real Width: $real_width");
 $log->debug("ffprobe Real Height: $real_height");
 $log->debug("ffprobe PAR string: $par_str");
@@ -335,16 +364,16 @@ $log->debug(sprintf("ffprobe DAR: %.5f", $dar));
 # get value from mediainfo
 if ($par_str eq "0:1" && $dar_str eq "0:1")
 {
-	$par = val($minfo, "$minfo_path/PixelAspectRatio");
+	$par = val($minfo, "${minfo_path}PixelAspectRatio", $xpc);
 	$log->debug("mediainfo PAR: $par");
 }
 
-my $src_width  = val($minfo, "$minfo_path/Width_CleanAperture")
-  || val($minfo, "$minfo_path/Width");
-my $src_height = val($minfo, "$minfo_path/Height_CleanAperture")
-  || val($minfo, "$minfo_path/Height");
-my $scan_type  = val($minfo, "$minfo_path/ScanType");
-my $chroma     = val($minfo, "$minfo_path/ChromaSubsampling");
+my $src_width  = val($minfo, "${minfo_path}Width_CleanAperture", $xpc)
+  || val($minfo, "${minfo_path}Width", $xpc);
+my $src_height = val($minfo, "${minfo_path}Height_CleanAperture", $xpc)
+  || val($minfo, "${minfo_path}Height", $xpc);
+my $scan_type  = val($minfo, "${minfo_path}ScanType", $xpc);
+my $chroma     = val($minfo, "${minfo_path}ChromaSubsampling", $xpc);
 $log->debug("mediainfo Width: $src_width");
 $log->debug("mediainfo Height: $src_height");
 $log->debug("Scan Type: $scan_type");
@@ -377,6 +406,12 @@ my $clean_ap_dimensions = "";
 my $prod_ap_dimensions = "";
 my $enc_pix_dimensions = "";
 
+# Get clean aperture dimensions from ExifTool. Clean aperture
+# determines how a video will be cropped.  We will need to
+# calculate crop width using the pixel aspect ratio of source
+# video because ExifTool gives clean aperture dimensions in
+# terms of how the video should be displayed, e.g. 640x480
+# for GCN video 231_0501_d.mov.
 if ($track_exists)
 {
 	$clean_ap_dimensions =
@@ -387,18 +422,25 @@ if ($track_exists)
 	  val($exif, "./Track$track_id:EncodedPixelsDimensions");
 }
 
+# If we can't find clean ap dimensions from ExifTool, set
+# them using metadata from MediaInfo.  In this case we don't
+# need to calculate crop width because MediaInfo reports
+# clean aperture dimensions using the total number of actual
+# pixes, e.g. 704x480 for GCN video 231_0501_d.mov.
 if (!$clean_ap_dimensions)
 {
 	$calc_crop_width = 0;
-	my $clean_ap_width  = val($minfo, "$minfo_path/Width_CleanAperture");
-	my $clean_ap_height = val($minfo, "$minfo_path/Height_CleanAperture");
+	my $clean_ap_width =
+	  val($minfo, "${minfo_path}Width_CleanAperture", $xpc);
+	my $clean_ap_height =
+	  val($minfo, "${minfo_path}Height_CleanAperture", $xpc);
 	if ($clean_ap_width && $clean_ap_height)
 	{
 		$clean_ap_dimensions = $clean_ap_width . 'x' . $clean_ap_height;
 	}
 	$enc_pix_dimensions =
-	    val($minfo, "$minfo_path/Width") . 'x'
-	  . val($minfo, "$minfo_path/Height");
+	    val($minfo, "${minfo_path}Width", $xpc) . 'x'
+	  . val($minfo, "${minfo_path}Height", $xpc);
 }
 
 $log->debug("Clean Aperture Dimensions:      $clean_ap_dimensions");
@@ -458,10 +500,8 @@ for my $profile_xml_file (@profile_paths)
 	push(@profiles, $profile_cfg->findnodes('/profiles/profile'));
 }
 
-# my $num_channels = val($minfo, '//Channel_s_');
-# $log->trace("$num_channels audio channels");
-# my $default_audio_bitrate = ($num_channels * 64) . 'k';
-# $log->trace("Default audio bitrate: $audio_bitrate");
+my $num_channels_src = val($minfo, $chan_path, $xpc);
+$log->trace("Mediainfo reports $num_channels_src channels in src video.");
 
 for my $profile (@profiles)
 {
@@ -472,6 +512,7 @@ for my $profile (@profiles)
 	my $video_bitrate    = val($profile, './vbitrate');
 	my $video_bufsize    = val($profile, './vbufsize');
 	my $audio_bitrate    = val($profile, './abitrate');
+	my $audio_channels   = val($profile, './achannels') || 2;
 	my $audio_samp_freq  = val($profile, './asampfreq') || '44.1kHz';
 
 	# set bufsize to double bitrate if not set
@@ -481,6 +522,20 @@ for my $profile (@profiles)
 		$video_bufsize *= 2;
 		$video_bufsize .= 'k';
 	}
+
+	# Set same number of channels in destination file if
+	# 'achannels' option is set to 'same'
+	if ($audio_channels =~ /same/)
+	{
+		$audio_channels = $num_channels_src;
+	}
+	$log->trace("Setting num channels in dest file to $audio_channels.");
+
+	if (!$audio_bitrate)
+	{
+		$audio_bitrate = ($audio_channels * 64) . 'k';
+	}
+	$log->trace("Setting audio bitrate in dest file to $audio_bitrate.");
 
 	$audio_samp_freq =~ s/\s*kHz$//i;
 	$audio_samp_freq *= 1000;
@@ -653,7 +708,7 @@ for my $profile (@profiles)
 		"-acodec"    => "libfdk_aac",
 		"-profile:a" => $aac_profile,
 		"-ab"        => $audio_bitrate,
-		"-ac"        => 2,
+		"-ac"        => $audio_channels,
 		"-ar"        => $audio_samp_freq,
 		"-cutoff"    => 18000,
 		"-movflags",
@@ -862,9 +917,13 @@ sub right_pad
 
 sub val
 {
-	my ($node, $xpath) = @_;
+	my ($node, $xpath, $xpc) = @_;
 	$log->trace($xpath);
-	return $node->findvalue($xpath);
+	if ($xpc) {
+		return $xpc->findvalue($xpath, $node);
+	} else {
+		return $node->findvalue($xpath);
+	}
 }
 
 
