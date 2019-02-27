@@ -456,7 +456,7 @@ if (   $clean_ap_dimensions
 
 	my $crop_width;
 	if ($calc_crop_width) {
-		$crop_width = round((1 / $par) * $clean_width);
+		$crop_width = round_even((1 / $par) * $clean_width);
 	} else {
 		$crop_width = $clean_width;
 	}
@@ -477,8 +477,8 @@ if (   $clean_ap_dimensions
 
 	$crop_filter_params =
 	    "$crop_width:$crop_height:"
-	  . round($diff_w / 2) . ':'
-	  . round($diff_h / 2);
+	  . round_even($diff_w / 2) . ':'
+	  . round_even($diff_h / 2);
 
 	$log->debug("Crop filter paramters: $crop_filter_params");
 }
