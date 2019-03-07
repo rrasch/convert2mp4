@@ -381,7 +381,7 @@ $log->debug("Chroma Subsampling: $chroma");
 
 my $square_width = round_even($src_width * $par);
 my $square_height = $src_height;
-$log->debug("Square pixel width: ${square_width}x${square_height}");
+$log->debug("Square pixel dimensions: ${square_width}x${square_height}");
 
 # if ($sar == 0)
 # {
