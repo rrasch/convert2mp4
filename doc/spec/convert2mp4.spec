@@ -22,6 +22,7 @@ Requires:	flvcheck
 Requires:	mediainfo
 Requires:	perl-Image-ExifTool
 Requires:	vcs
+Requires:	AtomicParsley
 
 %description
 %{summary}

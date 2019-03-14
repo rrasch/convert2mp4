@@ -63,7 +63,8 @@ my %opt = (
 	path_tmpdir => "/content/prod/rstar/tmp",
 
 	# Video encoding options
-	video_preset => "default",
+	video_preset  => "default",  # ffmpeg libx264 preset
+	video_threads => "auto",     # number of ffmpeg threads
 
 	profiles_path => ["profiles-movie-scenes.xml"],
 
@@ -179,7 +180,9 @@ for my $opt_name (keys %opt)
 {
 	if ($opt_name =~ /^path_(.*)$/)
 	{
-		$log->logdie("Path $1:$opt{$opt_name} doesn't exist")
+		my $path_desc = $1;
+		next if $path_desc =~ /atomicparsley/;
+		$log->logdie("Path $path_desc:$opt{$opt_name} doesn't exist")
 		  if !-e $opt{$opt_name};
 	}
 }
@@ -282,6 +285,8 @@ if ($opt{keyframe_timecode_file})
 }
 $log->debug("Timecodes: $timecode_str") if $timecode_str;
 
+$log->debug("Setting number of threads to $opt{video_threads}.");
+
 my @mediainfo_cmd = ($opt{path_mediainfo}, "-f",  "--Language=raw");
 
 my $minfo =
@@ -378,6 +383,14 @@ $log->debug("mediainfo Width: $src_width");
 $log->debug("mediainfo Height: $src_height");
 $log->debug("Scan Type: $scan_type");
 $log->debug("Chroma Subsampling: $chroma");
+
+# Check to see if video dimensions are divisible by 2 because
+# odd dimensions may cause problems with ffmpeg.
+if (is_odd($real_width) || is_odd($real_height))
+{
+	$log->logdie(
+		"Dimensions need to even: ${real_width}x${real_height}");
+}
 
 my $square_width = round_even($src_width * $par);
 my $square_height = $src_height;
@@ -713,7 +726,7 @@ for my $profile (@profiles)
 		"-cutoff"    => 18000,
 		"-movflags",
 		"+faststart",
-		"-threads"   => 0,
+		"-threads"   => $opt{video_threads},
 	);
 
 	push(@transcode_cmd, "-t" => 30) if $opt{test};
@@ -767,6 +780,13 @@ sub round
 	my $integer = sprintf("%.0f", $number);
 	$log->trace("Rounded $number to nearest integer $integer");
 	return $integer;
+}
+
+
+sub is_odd
+{
+	my $num = shift;
+	$num % 2;
 }
 
 
