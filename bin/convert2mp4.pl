@@ -325,7 +325,7 @@ my $ffprobe =
   XML::LibXML->load_xml(
     string => sys($opt{path_ffprobe}, '-v', 'quiet', '-print_format',
       'xml', '-show_streams', $input_file));
-my $ffpath = "/ffprobe/streams/stream[\@codec_type='video']";
+my $ffpath = "(/ffprobe/streams/stream[\@codec_type='video'])[1]";
 
 my $exif = XML::LibXML->load_xml(
 	string => sys(
