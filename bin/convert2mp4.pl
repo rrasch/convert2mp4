@@ -64,7 +64,7 @@ my %opt = (
 
 	# Video encoding options
 	video_preset  => "default",  # ffmpeg libx264 preset
-	video_threads => "auto",     # number of ffmpeg threads
+	video_threads => 0,          # number of ffmpeg threads
 
 	profiles_path => ["profiles-movie-scenes.xml"],
 
@@ -481,8 +481,14 @@ if (   $clean_ap_dimensions
 
 	if ($src_dim ne $crop_dim)
 	{
-		$log->logdie("Dimensions reported by mediainfo ($src_dim) ",
-			" != Crop dimensions ($crop_dim)");
+		my $err_msg = "Dimensions reported by mediainfo ($src_dim) "
+			. " != Crop dimensions ($crop_dim)";
+		if (abs($src_width - $crop_width) == 1
+				&& $src_height == $crop_height) {
+			$log->warn($err_msg);
+		} else {
+			$log->logdie($err_msg);
+		}
 	}
 
 	my $diff_w = $real_width  - $crop_width;
@@ -490,8 +496,8 @@ if (   $clean_ap_dimensions
 
 	$crop_filter_params =
 	    "$crop_width:$crop_height:"
-	  . round_even($diff_w / 2) . ':'
-	  . round_even($diff_h / 2);
+	  . round($diff_w / 2) . ':'
+	  . round($diff_h / 2);
 
 	$log->debug("Crop filter paramters: $crop_filter_params");
 }
