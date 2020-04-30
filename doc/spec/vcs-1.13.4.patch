@@ -1,0 +1,70 @@
+diff -ur vcs-1.13.4.orig/vcs vcs-1.13.4/vcs
+--- vcs-1.13.4.orig/vcs	2019-11-26 06:01:45.000000000 -0500
++++ vcs-1.13.4/vcs	2020-04-29 18:28:59.840677119 -0400
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env bash
++#!/bin/bash
+ #
+ # $Rev: 688 $ $Date: 2019-11-26 12:01:45 +0100 (Tue, 26 Nov 2019) $
+ #
+@@ -174,7 +174,9 @@
+ declare -a EVASION_ALTERNATIVES=( -5 +5 -10 +10 -30 +30 )
+ 
+ # Save the terminal settings to later restore them (in exithdlr)
+-declare -r STTY=$(stty -g)
++if [ -t 1 ]; then
++	declare -r STTY=$(stty -g)
++fi
+ 
+ # }}} # End of constants
+ 
+@@ -1667,7 +1669,9 @@
+ 	cleanup
+ 	# XXX: In one of my computers a terminal reset is required
+ 	#tset
+-	stty "$STTY"
++	if [ -t 1 ]; then
++		stty "$STTY"
++	fi
+ }
+ 
+ # Feedback handling, these functions are use to print messages respecting
+@@ -1823,7 +1827,7 @@
+ 	# work on FreeBSD to set colors
+ 
+ 	# Is tput available?
+-	if type -pf tput >/dev/null ; then
++	if [ -t 1 ] && type -pf tput >/dev/null ; then
+ 		# First we must find the correct way to query color support.
+ 		# There's basically two variants of tput:
+ 		#   terminfo (Linux) and termcap (FreeBSD)
+@@ -1836,13 +1840,7 @@
+ 		if tput Co >/dev/null 2>&1 ; then
+ 			tputc=$(tput Co) # termcap style
+ 		else
+-			# Try to guess if it's parsing it as columns
+-			# The method here is to check against some known terminals
+-			# pilot: 39 columns mono, pc3: 80 columns, 8 colors
+-			if [[ 8 = "$(tput -T pc3 colors)" ]]; then
+-				# colors is interpreted literally
+-				tputc=$(tput colors)
+-			fi
++			tputc=$(tput colors)
+ 		fi
+ 		# Is it able to set colours?
+ 		# Linux's tput can be passed arguments to retrieve the correct escape sequences
+@@ -4627,7 +4625,7 @@
+ # Execute exithdlr on exit
+ trap exithdlr EXIT
+ 
+-show_vcs_info
++#show_vcs_info
+ 
+ # Test requirements. Important, must check before looking at the
+ # command line (since getopt is used for the task)
+@@ -5344,5 +5342,3 @@
+ # * performance: bash loops are often slower than awk or perl
+ # * performance: grep + cut proved faster than an equivalent sed -r s// replacement
+ # }}} # Bash syntax notes
+-#
+-# vim:set ts=4 ai foldmethod=marker nu: #
