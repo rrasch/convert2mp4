@@ -135,6 +135,7 @@ $cfg_cmdl->define("help|h!");
 $cfg_cmdl->define("force|f!");
 $cfg_cmdl->define("test|t!");
 $cfg_cmdl->define("quiet|q!");
+$cfg_cmdl->define("static_codec_profiles");
 
 # Read audio delay option from cmd line
 $cfg_cmdl->define("adelay|a=f");
@@ -703,8 +704,6 @@ for my $profile (@profiles)
 		"-map_metadata"     => -1,
 		"-map_chapters"     => -1,
 		"-vcodec"           => "libx264",
-		"-profile:v"        => $h264_profile,
-		"-level"            => $h264_level,
 		"-b:v"              => $video_bitrate,
 		"-minrate"          => $video_bitrate,
 		"-maxrate"          => $video_bitrate,
@@ -713,6 +712,14 @@ for my $profile (@profiles)
 		"-pix_fmt"          => "yuv420p",
 		"-force_key_frames" => $force_keyframes,
 	);
+
+	if ($opt{static_codec_profiles})
+	{
+		push(@transcode_cmd,
+			"-profile:v" => $h264_profile,
+			"-level"     => $h264_level,
+		);
+	}
 
 	push(@transcode_cmd, "-vpre" => $opt{video_preset})
 	  if $opt{video_preset};
@@ -725,16 +732,17 @@ for my $profile (@profiles)
 
 	push(@transcode_cmd,
 		"-acodec"    => "libfdk_aac",
-		"-profile:a" => $aac_profile,
 		"-ab"        => $audio_bitrate,
 		"-ac"        => $audio_channels,
 		"-ar"        => $audio_samp_freq,
 		"-cutoff"    => 18000,
-		"-movflags",
-		"+faststart",
-		"-threads"   => $opt{video_threads},
 	);
 
+	push(@transcode_cmd, "-profile:a" => $aac_profile)
+	  if $opt{static_codec_profiles};
+
+	push(@transcode_cmd, "-movflags"  => "+faststart");
+	push(@transcode_cmd, "-threads"   => $opt{video_threads});
 	push(@transcode_cmd, "-t" => 30) if $opt{test};
 	push(@transcode_cmd, $mp4_file);
 
@@ -900,6 +908,15 @@ sub usage
 	  "            Add watermark. Optionally specify orientation\n",
 	  "            (TL|TR|BL|BR|C) and width as a percentage of\n",
 	  "            output video.\n",
+	  " --static_codec_profiles\n",
+	  "            Set H264 profile to Main@3.1 for mobile and\n",
+	  "            High@4.1 for non-mobibe. Set AAC profile to\n",
+	  "            AAC-LC for audio bitrates above 64kb and\n",
+	  "            HE-AAC v1 for audio bitrates below 64kb.\n",
+	  "            Without this option, libx264 and libfdk_aac\n",
+	  "            will choose the profiles using their defaults.\n",
+	  "            Set this option if you need to stitch the\n",
+	  "            resulting videos with MP4Box.\n",
 	  "\n",
 	  "    ", right_pad("Encoding option"), $tab, "Current value\n",
 	  "  ", "=" x 50, "\n";
