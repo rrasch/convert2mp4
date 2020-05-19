@@ -356,22 +356,34 @@ my $real_width    = val($ffprobe, "$ffpath/\@width");
 my $real_height   = val($ffprobe, "$ffpath/\@height");
 my $pixel_format  = val($ffprobe, "$ffpath/\@pix_fmt");
 my $par_str       = val($ffprobe, "$ffpath/\@sample_aspect_ratio");
-my $par           = str2float($par_str);
 my $dar_str       = val($ffprobe, "$ffpath/\@display_aspect_ratio");
-my $dar           = str2float($dar_str);
 $log->debug("ffprobe Real Width: $real_width");
 $log->debug("ffprobe Real Height: $real_height");
 $log->debug("ffprobe PAR string: $par_str");
-$log->debug(sprintf("ffprobe PAR: %.5f", $par));
 $log->debug("ffprobe DAR string: $dar_str");
-$log->debug(sprintf("ffprobe DAR: %.5f", $dar));
+
+my ($par, $dar);
+if ($par_str)
+{
+	$par = str2float($par_str);
+	$log->debug(sprintf("ffprobe PAR: %.5f", $par));
+}
+if ($dar_str)
+{
+	$dar = str2float($dar_str);
+	$log->debug(sprintf("ffprobe DAR: %.5f", $dar));
+}
 
 # if sample and display aspect ratio are undefined in ffprobe
 # get value from mediainfo
-if ($par_str eq "0:1" && $dar_str eq "0:1")
+if ($par_str eq "0:1" && $dar_str eq "0:1"
+		|| $par_str eq "" && $dar_str eq "")
 {
+	$log->warn("Couldn't find PAR/DAR from ffprobe.");
 	$par = val($minfo, "${minfo_path}PixelAspectRatio", $xpc);
+	$dar = val($minfo, "${minfo_path}DisplayAspectRatio", $xpc);
 	$log->debug("mediainfo PAR: $par");
+	$log->debug("mediainfo DAR: $dar");
 }
 
 my $src_width  = val($minfo, "${minfo_path}Width_CleanAperture", $xpc)
