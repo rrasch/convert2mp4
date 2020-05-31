@@ -1,6 +1,6 @@
 %define gitver	.git.%(date +"%Y%m%d")
 %define name	convert2mp4
-%define version	3.1.3
+%define version	3.1.4
 %define release	1.dlts%{?gitver}%{?dist}
 %define dlibdir	/usr/local/dlib/%{name}
 
@@ -61,3 +61,5 @@ rm -rf %{buildroot}
 %{_bindir}/*
 
 %changelog
+* Tue May 19 2020 Rasan Rasch - 3.1.4-1
+- 3.1.4
