@@ -20,7 +20,7 @@ use strict;
 use warnings;
 use version;
 use AppConfig qw(:expand);
-use Cwd qw(abs_path);
+use Cwd qw(abs_path getcwd);
 use Data::Dumper;
 use File::Basename;
 use File::Copy;
@@ -28,6 +28,7 @@ use File::Temp qw(tempdir);
 use File::Path;
 use Getopt::Std;
 use IO::CaptureOutput qw(capture_exec_combined);
+use JSON;
 use List::Util qw(min);
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Log::Log4perl::Level;
@@ -69,7 +70,7 @@ my %opt = (
 	profiles_path => ["profiles-movie-scenes.xml"],
 
 	# Flash media server config
-	fms_enabled     => 0,
+	fms_enabled     => "false",
 	fms_url         => "rtmp://localhost/vod/media/",
 	fms_content_dir => "/opt/adobe/ams/applications/vod/media",
 	fms_html_dir    => "/opt/adobe/ams/webroot",
@@ -79,6 +80,13 @@ my %opt = (
 
 	# append suffix to output file names
 	name_suffix => "s",
+
+	# Save info such as checksums and start/stop times
+	save_stats => "false",
+
+	# Set encoding profiles in script instead of
+	# libx264 and libfdk_aac choosing these values
+	"static_codec_profiles" => "true",
 );
 
 my $main_cfg_file = $ENV{CONVERT2MP4_CONF} || "conf/convert2mp4.conf";
@@ -110,23 +118,47 @@ my $tmpl_file = "$app_home/templates/fms.html.in";
 
 my @args = @ARGV;
 
-my $cfg_file = AppConfig->new({GLOBAL => {EXPAND => EXPAND_ALL}});
-my $cfg_cmdl = AppConfig->new({GLOBAL => {EXPAND => EXPAND_ALL}});
+my $cfg_opts = {GLOBAL => {EXPAND => EXPAND_ALL}};
+my $cfg_file = AppConfig->new($cfg_opts);
+my $cfg_cmdl = AppConfig->new($cfg_opts);
 
-# define variables for AppConfig 
+# define variables for AppConfig
+my @flags = ();
 for my $cfg ($cfg_file, $cfg_cmdl)
 {
 	for my $opt_name (keys %opt)
 	{
-		my $def = "$opt_name=s";
-		$def .= '@' if is_array($opt{$opt_name});
-		$cfg->define($def);
+		my $def = $opt_name;
+		my $val = $opt{$opt_name};
+		my $def_opts;
+		if ($val =~ /^(true|on|false|off)$/i)
+		{
+			push(@flags, $opt_name);
+			$def .= "!";
+			$def_opts = { DEFAULT => -1 };
+		}
+		else
+		{
+			$def .= "=s";
+			$def .= '@' if is_array($val);
+			$def_opts = {};
+		}
+		$cfg->define($def, $def_opts);
 	}
 }
 
+for my $flag (sort @flags)
+{
+	$opt{$flag} = $opt{$flag} =~ /^(true|on)$/i ? 1 : 0;
+}
+
 # Read options from file.
-$main_cfg_file = "$app_home/$main_cfg_file";
-if (-f $main_cfg_file) {
+if ($main_cfg_file !~ m,^/,)
+{
+	$main_cfg_file = "$app_home/$main_cfg_file";
+}
+if (-f $main_cfg_file)
+{
 	$cfg_file->file($main_cfg_file);
 }
 
@@ -135,7 +167,8 @@ $cfg_cmdl->define("help|h!");
 $cfg_cmdl->define("force|f!");
 $cfg_cmdl->define("test|t!");
 $cfg_cmdl->define("quiet|q!");
-$cfg_cmdl->define("static_codec_profiles");
+$cfg_cmdl->define("debug|d!");
+$cfg_cmdl->define("verbose|v!");
 
 # Read audio delay option from cmd line
 $cfg_cmdl->define("adelay|a=f");
@@ -147,9 +180,21 @@ $cfg_cmdl->define("watermark|w=s");
 # Read options from cmdline.
 $cfg_cmdl->args();
 
-if ($cfg_cmdl->get("quiet"))
+my $num_msg_flags = 0;
+for my $flag (qw/quiet debug verbose/)
 {
+	$num_msg_flags += $cfg_cmdl->get($flag);
+}
+if ($num_msg_flags > 1)
+{
+	$log->logdie("You can only specify one of -q, -d, and -v");
+}
+if ($cfg_cmdl->get("quiet")) {
 	$log->level($WARN);
+} elsif ($cfg_cmdl->get("debug")) {
+	$log->level($DEBUG);
+} elsif ($cfg_cmdl->get("verbose")) {
+	$log->level($TRACE);
 }
 
 # override default values
@@ -157,10 +202,21 @@ for my $cfg ($cfg_file, $cfg_cmdl)
 {
 	my %varlist = $cfg->varlist(".");
 	$log->trace('varlist: ', Dumper(\%varlist));
-	for my $opt_name (keys %varlist)
+	for my $opt_name (sort keys %varlist)
 	{
 		my $val = $cfg->get($opt_name);
-		$opt{$opt_name} = $val unless is_empty_array($val) || !$val;
+		$val = "" if !defined($val);
+		my $argcount = $cfg->_argcount($opt_name);
+		$log->trace("Argcount $opt_name: $argcount");
+		if ($argcount == 0)
+		{
+			$opt{$opt_name} = $val if $val >= 0;
+		}
+		else
+		{
+			$opt{$opt_name} = $val
+			  if $val || $val eq "0" and !is_empty_array($val);
+		}
 	}
 }
 
@@ -202,6 +258,9 @@ if (!$output_prefix) {
 	$output_prefix = $dirname . $filename;
 }
 $log->debug("Output prefix: $output_prefix");
+
+my $stats_file = "${output_prefix}_stats.json";
+my $md5_file   = "${output_prefix}_md5.txt";
 
 my $output_dir = dirname($output_prefix);
 if (! -d $output_dir) {
@@ -535,6 +594,8 @@ for my $profile_xml_file (@profile_paths)
 my $num_channels_src = val($minfo, $chan_path, $xpc);
 $log->trace("Mediainfo reports $num_channels_src channels in src video.");
 
+my $stats = {};
+
 for my $profile (@profiles)
 {
 	next unless val($profile, './enabled');
@@ -758,7 +819,7 @@ for my $profile (@profiles)
 	push(@transcode_cmd, "-t" => 30) if $opt{test};
 	push(@transcode_cmd, $mp4_file);
 
-	sys(@transcode_cmd);
+	$stats->{$total_bitrate} = do_cmd(@transcode_cmd, 0);
 
 	if (-x $opt{path_atomicparsley})
 	{
@@ -776,7 +837,6 @@ for my $profile (@profiles)
 	move($mp4_file, $output_file)
 	  or $log->logdie("can't move $mp4_file to $output_file: $!");
 }
-
 
 if ($opt{fms_enabled})
 {
@@ -797,6 +857,30 @@ if ($opt{fms_enabled})
 			sys("scp", $output_file, $opt{fms_content_dir});
 		}
 	}
+}
+
+if ($opt{save_stats})
+{
+	my $json = to_json($stats, {utf8 => 1, pretty => 1});
+	write_file($json, $stats_file);
+
+	my $cwd = getcwd();
+	chdir($output_dir)
+	  or $log->logdie("Can't chdir to $output_dir: $!");
+	my $md5_checksums =
+	  sys("md5sum", map(basename($_), @output_files));
+	write_file($md5_checksums, $md5_file);
+	chdir($cwd) or $log->logdie("Can't chdir to $cwd: $!");
+}
+
+
+sub write_file
+{
+	my ($str, $output_file) = @_;
+	open(my $out, ">$output_file")
+	  or $log->logdie("can't open $output_file: $!");
+	print $out $str;
+	close($out);
 }
 
 
@@ -868,12 +952,21 @@ sub create_fms_html
 
 sub sys
 {
+	do_cmd(@_, 1);
+}
+
+
+sub do_cmd
+{
+	my $just_output = pop;
 	my @cmd = @_;
 	my $cmd_str = join(" ", @cmd);
 	$log->debug("running command '$cmd_str'");
 	my $start_time = time;
 	my ($output, $success, $exit_code) = capture_exec_combined(@cmd);
 	my $end_time = time;
+	my $duration = $end_time - $start_time;
+	my $duration_str = duration_exact($duration);
 	$output =~ s/\r/\n/g;  # replace carriage returns with newlines
 	# remove invalid xml characters
 	$output =~
@@ -881,12 +974,28 @@ sub sys
 	  if $output =~ /<\?xml version=/;
 	my $exit_status = $exit_code >> 8;
 	$log->trace("output: $output");
-	$log->debug("run time: ", duration_exact($end_time - $start_time));
-	if (!$success && !($cmd[0] =~ /^pgrep/ && $exit_status == 1)) {
+	$log->debug("run time: $duration_str");
+	if (!$success && !($cmd[0] =~ /^pgrep/ && $exit_status == 1))
+	{
 		$log->logdie("Command '$cmd_str' exited with ",
 			"status: $exit_status, output: $output");
 	}
-	return $output;
+	if ($just_output)
+	{
+		return $output;
+	}
+	else
+	{
+		return {
+			start_time   => $start_time,
+			end_time     => $end_time,
+			duration     => $duration,
+			duration_str => $duration_str,
+			output       => $output,
+			success      => $success,
+			exit_code    => $exit_code,
+		};
+	}
 }
 
 
