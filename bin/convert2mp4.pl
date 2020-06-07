@@ -859,6 +859,16 @@ if ($opt{fms_enabled})
 	}
 }
 
+my $script_end_time = time;
+my $script_duration = $script_end_time - $^T;
+
+$stats->{all} = {
+	start_time   => $^T,
+	end_time     => $script_end_time,
+	duration     => $script_duration,
+	duration_str => duration_exact($script_duration),
+};
+
 if ($opt{save_stats})
 {
 	my $json = to_json($stats, {utf8 => 1, pretty => 1});
