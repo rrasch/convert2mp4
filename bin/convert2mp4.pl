@@ -86,7 +86,7 @@ my %opt = (
 
 	# Set encoding profiles in script instead of
 	# libx264 and libfdk_aac choosing these values
-	"static_codec_profiles" => "true",
+	"static_codec_profiles" => "false",
 );
 
 my $main_cfg_file = $ENV{CONVERT2MP4_CONF} || "conf/convert2mp4.conf";
