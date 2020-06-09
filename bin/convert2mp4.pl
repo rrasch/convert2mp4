@@ -87,6 +87,9 @@ my %opt = (
 	# Set encoding profiles in script instead of
 	# libx264 and libfdk_aac choosing these values
 	"static_codec_profiles" => "false",
+
+	# Extra arguments to pass to ffmpeg
+	"extra_args" => "",
 );
 
 my $main_cfg_file = $ENV{CONVERT2MP4_CONF} || "conf/convert2mp4.conf";
@@ -817,6 +820,8 @@ for my $profile (@profiles)
 	push(@transcode_cmd, "-movflags"  => "+faststart");
 	push(@transcode_cmd, "-threads"   => $opt{video_threads});
 	push(@transcode_cmd, "-t" => 30) if $opt{test};
+	push(@transcode_cmd, split(/\s+/, $opt{extra_args}))
+	  if $opt{extra_args};
 	push(@transcode_cmd, $mp4_file);
 
 	$stats->{$total_bitrate} = do_cmd(@transcode_cmd, 0);
