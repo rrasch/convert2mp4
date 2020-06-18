@@ -633,6 +633,40 @@ for my $profile (@profiles)
 	}
 	$log->trace("Setting audio bitrate in dest file to $audio_bitrate.");
 
+	# Calculate total bitrate
+	my $total_bitrate = 0;
+	for my $bitrate ($video_bitrate, $audio_bitrate)
+	{
+		my $rate = $bitrate;
+		$rate =~ s/k$//;
+		$total_bitrate += $rate;
+	}
+	$total_bitrate .= "k";
+	$log->debug("Total bitrate: $total_bitrate");
+
+	my $output_file = "${output_prefix}_${total_bitrate}";
+# 	$output_file .= "_$video_device" if $video_device;
+	$output_file .= "_$opt{name_suffix}" if $opt{name_suffix};
+	$output_file .= ".mp4";
+	push(@output_files, $output_file);
+
+	if (-f $output_file)
+	{
+		if ($opt{force})
+		{
+			$log->info("Force option set, forcing removal of '$output_file'");
+			unlink($output_file)
+			  or $log->logdie("can't remove $output_file: $!");
+		}
+		else
+		{
+			$log->warn("Output file '$output_file' already exists.");
+			next;
+		}
+	}
+
+	$log->debug("Output file: $output_file");
+
 	$audio_samp_freq =~ s/\s*kHz$//i;
 	$audio_samp_freq *= 1000;
 
@@ -692,40 +726,6 @@ for my $profile (@profiles)
 	}
 
 	$log->debug("New Dimensions: $video_dimensions");
-
-	# Calculate total bitrate
-	my $total_bitrate = 0;
-	for my $bitrate ($video_bitrate, $audio_bitrate)
-	{
-		my $rate = $bitrate;
-		$rate =~ s/k$//;
-		$total_bitrate += $rate;
-	}
-	$total_bitrate .= "k";
-	$log->debug("Total bitrate: $total_bitrate");
-
-	my $output_file = "${output_prefix}_${total_bitrate}";
-# 	$output_file .= "_$video_device" if $video_device;
-	$output_file .= "_$opt{name_suffix}" if $opt{name_suffix};
-	$output_file .= ".mp4";
-	push(@output_files, $output_file);
-
-	if (-f $output_file)
-	{
-		if ($opt{force})
-		{
-			$log->info("Force option set, forcing removal of '$output_file'");
-			unlink($output_file)
-			  or $log->logdie("can't remove $output_file: $!");
-		}
-		else
-		{
-			$log->warn("Output file '$output_file' already exists.");
-			next;
-		}
-	}
-
-	$log->debug("Output file: $output_file");
 
 	my $short_name = basename($output_file, ".mp4");
 	my $mp4_file   = "$tmpdir/$short_name.mp4";
