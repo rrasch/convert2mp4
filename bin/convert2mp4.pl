@@ -872,6 +872,7 @@ $stats->{all} = {
 	end_time     => $script_end_time,
 	duration     => $script_duration,
 	duration_str => duration_exact($script_duration),
+	exit_code    => 0,
 };
 
 if ($opt{save_stats})
