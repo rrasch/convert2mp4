@@ -350,6 +350,11 @@ $log->debug("Timecodes: $timecode_str") if $timecode_str;
 
 $log->debug("Setting number of threads to $opt{video_threads}.");
 
+my ($ffmpeg_version) =
+  sys($opt{path_ffmpeg}, '-version') =~ /ffmpeg version ([\d.]+)/;
+
+$log->trace("FFmpeg version: $ffmpeg_version");
+
 my @mediainfo_cmd = ($opt{path_mediainfo}, "-f",  "--Language=raw");
 
 my $minfo =
@@ -803,7 +808,17 @@ for my $profile (@profiles)
 	if ($is_interlaced)
 	{
 		$log->debug("Setting ffmpeg to deinterlace video");
-		push(@transcode_cmd, "-deinterlace");
+		# -deinterlace option removed in ffmpeg 5.0 so use
+		# bwdif filter instead
+		if (version->parse($ffmpeg_version) >= version->parse('5'))
+		{
+			push(@transcode_cmd,
+				"-filter:v", "bwdif=mode=send_field:parity=auto:deint=all");
+		}
+		else
+		{
+			push(@transcode_cmd, "-deinterlace");
+		}
 	}
 
 	push(@transcode_cmd,
