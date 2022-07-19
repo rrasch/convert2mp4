@@ -17,6 +17,7 @@ BuildArch:	noarch
 %if 0%{?fedora} > 0 || 0%{?centos} > 0
 BuildRequires:	git
 %endif
+BuildRequires:	perl-generators
 Requires:	ffmpeg >= 2.1.4
 Requires:	flvcheck
 Requires:	mediainfo
