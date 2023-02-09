@@ -24,16 +24,17 @@ use Cwd qw(abs_path getcwd);
 use Data::Dumper;
 use File::Basename;
 use File::Copy;
-use File::Temp qw(tempdir);
 use File::Path;
+use File::Temp qw(tempdir);
 use Getopt::Std;
 use IO::CaptureOutput qw(capture_exec_combined);
 use JSON;
 use List::Util qw(min);
-use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Log::Log4perl::Level;
-use Time::Duration;
+use Log::Log4perl qw(get_logger :no_extra_logdie_message);
+use LWP::Simple;
 use Sys::Hostname;
+use Time::Duration;
 use XML::LibXML;
 
 
@@ -90,6 +91,9 @@ my %opt = (
 
 	# Extra arguments to pass to ffmpeg
 	"extra_args" => "",
+
+	# POST ffmpeg progress to this flask app
+	"progress_url" => "",
 );
 
 my $main_cfg_file = $ENV{CONVERT2MP4_CONF} || "conf/convert2mp4.conf";
@@ -415,6 +419,11 @@ eval { $track_exists = val($exif, "./Track$track_id:TrackID"); };
 if ($@) {
 	$log->warn($@);
 }
+
+# my $num_frames = val($ffprobe, "$ffpath/\@nb_frames");
+# $log->debug("ffprobe Num Frames: $num_frames");
+my $num_frames = val($minfo, "${minfo_path}FrameCount", $xpc);
+$log->debug("Mediainfo Num Frames: $num_frames");
 
 my $ff_video_idx  = val($ffprobe, "$ffpath/\@index");
 my $ff_audio_idx  = val($ffprobe, "/ffprobe/streams/stream"
@@ -765,6 +774,12 @@ for my $profile (@profiles)
 			"-nostats",
 			"-loglevel" => "warning",
 		);
+	}
+
+	if ($opt{progress_url} && head($opt{progress_url}))
+	{
+		push(@transcode_cmd,
+			"-progress" => "$opt{progress_url}/$short_name/$num_frames");
 	}
 
 	push(@transcode_cmd, "-i" => $input_file);
