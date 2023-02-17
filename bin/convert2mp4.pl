@@ -359,6 +359,8 @@ my ($ffmpeg_version) =
 
 $log->trace("FFmpeg version: $ffmpeg_version");
 
+my $is_ffmpeg5 = version->parse($ffmpeg_version) >= version->parse('5');
+
 my @mediainfo_cmd = ($opt{path_mediainfo}, "-f",  "--Language=raw");
 
 my $minfo =
@@ -757,6 +759,8 @@ for my $profile (@profiles)
 	  if $opt{watermark};
 	$video_filter .= "crop=$crop_filter_params," if $crop_filter_params;
 	$video_filter .= "scale=$width:$height,setsar=1/1";
+	$video_filter .= ",bwdif=mode=send_field:parity=auto:deint=all"
+	  if $is_interlaced && $is_ffmpeg5;
 	$video_filter .=
 	    " [tmp];  [tmp][watermark]"
 	  . " overlay=$wm_coord{$wm_orientation} [out]"
@@ -820,20 +824,12 @@ for my $profile (@profiles)
 	push(@transcode_cmd, "-vpre" => $opt{video_preset})
 	  if $opt{video_preset};
 
-	if ($is_interlaced)
+	# -deinterlace option removed in ffmpeg 5 so use
+	# bwdif filter above in this case
+	if ($is_interlaced && !$is_ffmpeg5)
 	{
 		$log->debug("Setting ffmpeg to deinterlace video");
-		# -deinterlace option removed in ffmpeg 5.0 so use
-		# bwdif filter instead
-		if (version->parse($ffmpeg_version) >= version->parse('5'))
-		{
-			push(@transcode_cmd,
-				"-filter:v", "bwdif=mode=send_field:parity=auto:deint=all");
-		}
-		else
-		{
-			push(@transcode_cmd, "-deinterlace");
-		}
+		push(@transcode_cmd, "-deinterlace");
 	}
 
 	push(@transcode_cmd,
