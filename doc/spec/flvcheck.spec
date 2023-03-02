@@ -1,3 +1,6 @@
+%global __brp_check_rpaths %{nil}
+%global _missing_build_ids_terminate_build %{nil}
+
 %define name	flvcheck
 %define version	1.0
 %define release	1.dlts%{?dist}
