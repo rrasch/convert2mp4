@@ -52,6 +52,19 @@ mv %{buildroot}%{dlibdir}/README.md %{buildroot}%{dlibdir}/doc
 %clean
 rm -rf %{buildroot}
 
+%post
+CONV_CNF_FILE=%{dlibdir}/conf/%{name}.conf
+TQ_CNF_FILE=/content/prod/rstar/etc/task-queue.sysconfig
+if [ -f $TQ_CNF_FILE ]; then
+    source $TQ_CNF_FILE
+    if [ -n "$PROGRESS_URL" ] && ! grep -qs '\[progress\]' $CONV_CNF_FILE; then
+        cat << EOF >> $CONV_CNF_FILE
+[progress]
+url = $PROGRESS_URL
+EOF
+    fi
+fi
+
 %files
 %defattr(-, root, dlib)
 %dir %{dlibdir}
