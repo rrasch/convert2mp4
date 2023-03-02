@@ -352,7 +352,13 @@ if ($opt{keyframe_timecode_file})
 }
 $log->debug("Timecodes: $timecode_str") if $timecode_str;
 
-$log->debug("Setting number of threads to $opt{video_threads}.");
+my $threads = $opt{video_threads};
+if (is_task_queue_process())
+{
+	$log->debug("This is a task queue process.");
+	$threads = 1;
+}
+$log->debug("Setting number of threads to $threads.");
 
 my ($ffmpeg_version) =
   sys($opt{path_ffmpeg}, '-version') =~ /ffmpeg version ([\d.]+)/;
@@ -844,7 +850,7 @@ for my $profile (@profiles)
 	  if $opt{static_codec_profiles};
 
 	push(@transcode_cmd, "-movflags"  => "+faststart");
-	push(@transcode_cmd, "-threads"   => $opt{video_threads});
+	push(@transcode_cmd, "-threads"   => $threads);
 	push(@transcode_cmd, "-t" => 30) if $opt{test};
 	push(@transcode_cmd, split(/\s+/, $opt{extra_args}))
 	  if $opt{extra_args};
@@ -1138,5 +1144,13 @@ sub str2float
 	my $aspect_ratio = shift;
 	$aspect_ratio =~ s,:,/,;
 	eval $aspect_ratio;
+}
+
+
+sub is_task_queue_process
+{
+	my $ppid  = getppid();
+	my $pname = sys("ps", "--no-headers", "-o", "cmd", $ppid);
+	return $pname =~ /task-queue/;
 }
 
