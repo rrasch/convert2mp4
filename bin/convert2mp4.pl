@@ -1123,7 +1123,7 @@ sub is_empty_array
 
 sub right_pad
 {
-	sprintf("%-20s", shift);
+	sprintf("%-21s", shift);
 }
 
 
