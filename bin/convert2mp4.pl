@@ -28,11 +28,12 @@ use File::Path;
 use File::Temp qw(tempdir);
 use Getopt::Std;
 use IO::CaptureOutput qw(capture_exec_combined);
+use IO::Socket::SSL;
 use JSON;
 use List::Util qw(min);
 use Log::Log4perl::Level;
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
-use LWP::Simple;
+use LWP::UserAgent;
 use Sys::Hostname;
 use Time::Duration;
 use XML::LibXML;
@@ -627,6 +628,21 @@ if ('$Id$' =~ /^\$Id\: (.*) \$$/)
 	$git_id = $1;
 }
 
+my $ua = LWP::UserAgent->new(
+	timeout  => 10,
+	ssl_opts => {
+		verify_hostname => 0,
+		SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE,
+	},
+);
+
+if ($log->is_trace())
+{
+	$ua->show_progress(1);
+	$ua->add_handler("request_send",  sub { shift->dump; return });
+	$ua->add_handler("response_done", sub { shift->dump; return });
+}
+
 for my $profile (@profiles)
 {
 	next unless val($profile, './enabled');
@@ -792,10 +808,15 @@ for my $profile (@profiles)
 		);
 	}
 
-	if ($opt{progress_url} && head($opt{progress_url}))
+	if ($opt{progress_url})
 	{
-		push(@transcode_cmd,
-			"-progress" => "$opt{progress_url}/$short_name/$num_frames");
+		my $res = $ua->head($opt{progress_url});
+		if ($res->is_success && $res->message !~ /Assumed K/)
+		{
+			push(@transcode_cmd,
+				"-progress" =>
+				  "$opt{progress_url}/$short_name/$num_frames");
+		}
 	}
 
 	push(@transcode_cmd, "-i" => $input_file);
