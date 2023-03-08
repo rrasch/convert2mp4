@@ -862,7 +862,7 @@ for my $profile (@profiles)
 	{
 		sys(
 			$opt{path_atomicparsley}, $mp4_file, '--overWrite',
-			'--encodingTool', 'https://github.com/rrasch/convert2mp4',
+			'--encodingTool', 'convert2mp4$Id$',
 			'--encodedBy',    'rasan@nyu.edu',
 		   );
 	}
