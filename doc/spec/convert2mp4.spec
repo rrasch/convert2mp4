@@ -37,6 +37,7 @@ rm -rf %{buildroot}
 
 git clone %{url}.git %{buildroot}%{dlibdir}
 rm -rf %{buildroot}%{dlibdir}/.git
+rm -f %{buildroot}%{dlibdir}/.gitattributes
 find %{buildroot}%{dlibdir} -type d | xargs chmod 0755
 find %{buildroot}%{dlibdir} -type f | xargs chmod 0644
 chmod 0755 %{buildroot}%{dlibdir}/bin/*
