@@ -621,7 +621,11 @@ $log->trace("Mediainfo reports $num_channels_src channels in src video.");
 
 my $stats = {};
 
-my $git_id = '$Id$' =~ /^\$Id\: (.*) \$$/ ? $1 : "";
+my $git_id = "";
+if ('$Id$' =~ /^\$Id\: (.*) \$$/)
+{
+	$git_id = $1;
+}
 
 for my $profile (@profiles)
 {
