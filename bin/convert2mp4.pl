@@ -621,6 +621,8 @@ $log->trace("Mediainfo reports $num_channels_src channels in src video.");
 
 my $stats = {};
 
+my $git_id = '$Id$' =~ /^\$Id\: (.*) \$$/ ? $1 : "";
+
 for my $profile (@profiles)
 {
 	next unless val($profile, './enabled');
@@ -862,7 +864,7 @@ for my $profile (@profiles)
 	{
 		sys(
 			$opt{path_atomicparsley}, $mp4_file, '--overWrite',
-			'--encodingTool', 'convert2mp4$Id$',
+			'--encodingTool', "convert2mp4${git_id}",
 			'--encodedBy',    'rasan@nyu.edu',
 		   );
 	}
