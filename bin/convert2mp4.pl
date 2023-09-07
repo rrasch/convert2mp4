@@ -16,6 +16,7 @@
 #
 # Author: Rasan Rasch <rasan@nyu.edu>
 
+use diagnostics;
 use strict;
 use warnings;
 use version;
@@ -61,6 +62,12 @@ my %opt = (
 
 	# Tool to write metadata tags to mp4 files
 	path_atomicparsley => "/usr/bin/AtomicParsley",
+
+	# Tool to limit cpu of ffmpeg such as nice or taskset
+	path_nice => "",
+
+	# Command line arguments to the program above
+	nice_args => "",
 
 	# Directory for intermediate files
 	path_tmpdir => "/content/prod/rstar/tmp",
@@ -775,9 +782,6 @@ for my $profile (@profiles)
 	my $mp4_file   = "$tmpdir/$short_name.mp4";
 	my $html_file  = "${output_prefix}_${total_bitrate}.html";
 
-	# Transcode input file to mp4 file.
-	my @transcode_cmd;
-
 	my $wm_width = round_even($width * ($wm_width_percent / 100))
 	  if $opt{watermark};
 
@@ -797,7 +801,16 @@ for my $profile (@profiles)
 	my $force_keyframes = "chapters";
 	$force_keyframes .= ",$timecode_str" if $timecode_str;
 
-	@transcode_cmd = ($opt{path_ffmpeg});
+	my @transcode_cmd = ();
+
+	if ($opt{path_nice})
+	{
+		push(@transcode_cmd, $opt{path_nice});
+		my @nice_args = grep { /\S/ } split(/\s+/, $opt{nice_args});
+		push(@transcode_cmd, @nice_args) if @nice_args;
+	}
+
+	push(@transcode_cmd, $opt{path_ffmpeg});
 
 	if ($opt{quiet})
 	{
