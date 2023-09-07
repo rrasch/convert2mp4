@@ -1,7 +1,9 @@
-%define gitver	.git.%(date +"%Y%m%d")
 %define name	convert2mp4
-%define version	3.1.4
-%define release	1.dlts%{?gitver}%{?dist}
+%define version	3.2.0
+%define gitdate	%(date +"%Y%m%d")
+%define repourl	https://github.com/rrasch/%{name}
+%define commit	%(get-commit-id.sh %{repourl})
+%define release	1.dlts.git.%{gitdate}.%{commit}%{?dist}
 %define dlibdir	/usr/local/dlib/%{name}
 
 Summary:	Convert video file to mp4 for HIDVL streaming.
