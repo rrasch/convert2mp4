@@ -253,7 +253,7 @@ for my $opt_name (keys %opt)
 	if ($opt_name =~ /^path_(.*)$/)
 	{
 		my $path_desc = $1;
-		next if $path_desc =~ /atomicparsley/;
+		next if !$opt{$opt_name} && $path_desc eq "nice";
 		$log->logdie("Path $path_desc:$opt{$opt_name} doesn't exist")
 		  if !-e $opt{$opt_name};
 	}
