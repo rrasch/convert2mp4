@@ -1,5 +1,5 @@
 %define name	convert2mp4
-%define version	3.2.1
+%define version	3.2.2
 %define gitdate	%(date +"%Y%m%d")
 %define repourl	https://github.com/rrasch/%{name}
 %define commit	%(get-commit-id.sh %{repourl})

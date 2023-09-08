@@ -826,9 +826,10 @@ for my $profile (@profiles)
 		my $res = $ua->head($opt{progress_url});
 		if ($res->is_success && $res->message !~ /Assumed K/)
 		{
-			push(@transcode_cmd,
-				"-progress" =>
-				  "$opt{progress_url}/$short_name/$num_frames");
+			my $prog_url = $opt{progress_url};
+			$prog_url =~ s,/$,,;
+			$prog_url = "$prog_url/update/$short_name/$num_frames";
+			push(@transcode_cmd, "-progress" => $prog_url);
 		}
 	}
 
