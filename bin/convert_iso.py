@@ -42,6 +42,12 @@ def parse_args():
         help="Encode duration in seconds (for test clips)",
     )
 
+    parser.add_argument(
+        "--threads",
+        type=int,
+        help="Number of threads HandBrake will use (default: auto)",
+    )
+
     group = parser.add_mutually_exclusive_group()
 
     group.add_argument(
@@ -101,6 +107,9 @@ def build_command(args):
     # Output + preset
     cmd += ["-o", args.output, "--preset", args.preset]
 
+    # Optimize MP4 files for HTTP streaming
+    cmd += ["--optimize"]
+
     # Title
     if args.title is not None:
         cmd += ["-t", str(args.title)]
@@ -109,12 +118,18 @@ def build_command(args):
     height = get_video_height(input_path)
     cmd += ["--non-anamorphic", "-l", str(height)]
 
+    # Use the Fraunhofer FDK AAC encoder for the audio track
+    cmd += ["--aencoder", "fdk_aac"]
+
     # Partial encode options
     if args.start is not None:
         cmd += ["--start-at", f"duration:{args.start}"]
 
     if args.duration is not None:
         cmd += ["--stop-at", f"duration:{args.duration}"]
+
+    if args.threads is not None:
+        cmd += ["--encopts", f"threads={args.threads}"]
 
     return cmd
 
