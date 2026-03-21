@@ -48,6 +48,11 @@ def parse_args():
         help="Number of threads HandBrake will use (default: auto)",
     )
 
+    parser.add_argument(
+        "--log-file",
+        help="File to write HandBrake output to (optional)",
+    )
+
     group = parser.add_mutually_exclusive_group()
 
     group.add_argument(
@@ -139,20 +144,23 @@ def shlex_join(split_command):
     return " ".join(shlex.quote(arg) for arg in split_command)
 
 
-def run(cmd, quiet=False):
+def run(cmd, quiet=False, log_file=None):
     try:
         logging.info("Running command: %s", shlex_join(cmd))
 
-        result = subprocess.run(
-            cmd,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-        )
+        run_args = {
+            "check": True,
+            "stderr": subprocess.STDOUT,
+            "universal_newlines": True,
+        }
 
-        if not quiet:
-            logging.info("\n%s", result.stdout)
+        if log_file:
+            with open(log_file, "w", encoding="utf-8") as f:
+                result = subprocess.run(cmd, stdout=f, **run_args)
+        else:
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, **run_args)
+            if not quiet and result.stdout:
+                logging.info("\n%s", result.stdout)
 
         return result
 
@@ -161,6 +169,10 @@ def run(cmd, quiet=False):
         if e.stdout:
             logging.error("\n%s", e.stdout)
         sys.exit(e.returncode)
+
+    except FileNotFoundError:
+        logging.error("Command not found: %s", cmd[0])
+        sys.exit(1)
 
 
 def setup_logging(quiet: bool):
@@ -177,7 +189,7 @@ def main():
     args = parse_args()
     setup_logging(args.quiet)
     cmd = build_command(args)
-    run(cmd, quiet=args.quiet)
+    run(cmd, quiet=args.quiet, log_file=args.log_file)
 
 
 if __name__ == "__main__":
