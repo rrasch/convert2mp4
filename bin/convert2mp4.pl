@@ -666,7 +666,7 @@ for my $profile (@profiles)
 	if (!$video_bufsize)
 	{
 		($video_bufsize = $video_bitrate) =~ s/k$//;
-		$video_bufsize *= 2;
+		$video_bufsize *= 3;
 		$video_bufsize .= 'k';
 	}
 
@@ -791,15 +791,14 @@ for my $profile (@profiles)
 	  if $opt{watermark};
 	$video_filter .= "crop=$crop_filter_params," if $crop_filter_params;
 	$video_filter .= "scale=$width:$height,setsar=1/1";
-	$video_filter .= ",bwdif=mode=send_field:parity=auto:deint=all"
+	$video_filter .= ",bwdif=mode=send_frame:parity=auto:deint=all"
 	  if $is_interlaced && $is_ffmpeg5;
 	$video_filter .=
 	    " [tmp];  [tmp][watermark]"
 	  . " overlay=$wm_coord{$wm_orientation} [out]"
 	  if $opt{watermark};
 
-	my $force_keyframes = "chapters";
-	$force_keyframes .= ",$timecode_str" if $timecode_str;
+	my $force_keyframes = $timecode_str;
 
 	my @transcode_cmd = ();
 
@@ -857,8 +856,10 @@ for my $profile (@profiles)
 		"-bufsize"          => $video_bufsize,
 		"-vf"               => $video_filter,
 		"-pix_fmt"          => "yuv420p",
-		"-force_key_frames" => $force_keyframes,
 	);
+
+	push(@transcode_cmd, "-force_key_frames" => $force_keyframes)
+	  if $force_keyframes;
 
 	if ($opt{static_codec_profiles})
 	{
