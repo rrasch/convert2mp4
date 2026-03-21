@@ -70,11 +70,14 @@ def get_video_height(input_file):
             .strip()
         )
         return int(height_str)
+    except FileNotFoundError:
+        logging.error("Mediainfo not found")
+        sys.exit(1)
     except subprocess.CalledProcessError:
-        print("Error: failed to run mediainfo")
+        logging.error("Failed to run mediainfo")
         sys.exit(1)
     except ValueError:
-        print(f"Error: invalid height returned: {height_str}")
+        logging.error(f"Invalid height returned: {height_str}")
         sys.exit(1)
 
 
@@ -82,7 +85,7 @@ def build_command(args):
     input_path = Path(args.input)
 
     if not input_path.exists():
-        print(f"Error: file not found: {input_path}")
+        logging.error(f"File not found: {input_path}")
         sys.exit(1)
 
     cmd = ["HandBrakeCLI", "-i", str(input_path)]
