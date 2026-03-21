@@ -119,16 +119,21 @@ def build_command(args):
     return cmd
 
 
+def shlex_join(split_command):
+    """Return a shell-escaped string from *split_command*."""
+    return " ".join(shlex.quote(arg) for arg in split_command)
+
+
 def run(cmd, quiet=False):
     try:
-        logging.info("Running command: %s", shlex.join(cmd))
+        logging.info("Running command: %s", shlex_join(cmd))
 
         result = subprocess.run(
             cmd,
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True,
+            universal_newlines=True,
         )
 
         if not quiet:
