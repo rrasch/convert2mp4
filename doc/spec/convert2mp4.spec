@@ -38,6 +38,15 @@ Requires:       HandBrake
 rm -rf %{buildroot}
 
 git clone %{url}.git %{buildroot}%{dlibdir}
+
+pushd %{buildroot}%{dlibdir}
+%if "%{git_tag}" != "v0.0.0"
+git -c advice.detachedHead=false checkout %{git_tag}
+%else
+git -c advice.detachedHead=false checkout %{git_commit}
+%endif
+popd
+
 rm -rf %{buildroot}%{dlibdir}/.git
 rm -f %{buildroot}%{dlibdir}/.gitattributes
 find %{buildroot}%{dlibdir} -type d | xargs chmod 0755
