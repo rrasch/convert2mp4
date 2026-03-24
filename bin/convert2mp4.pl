@@ -432,8 +432,11 @@ for my $ns ($exif->findnodes('./namespace::*'))
 
 my $track_exists;
 eval { $track_exists = val($exif, "./Track$track_id:TrackID"); };
-if ($@) {
-	$log->warn($@);
+if ($@)
+{
+	$log->warn(
+		"MediaInfo TrackID $track_id not found in ExifTool metadata: $@"
+	);
 }
 
 # my $num_frames = val($ffprobe, "$ffpath/\@nb_frames");
@@ -1195,4 +1198,3 @@ sub is_task_queue_process
 	my $pname = sys("ps", "--no-headers", "-o", "cmd", $ppid);
 	return $pname =~ /task-queue/;
 }
-
