@@ -40,6 +40,10 @@ use Time::Duration;
 use XML::LibXML;
 
 
+my $host = hostname();
+
+my $env = $host =~ /^d/i ? "dev" : "prod";
+
 # Default config values:
 # Config options not set in conf/convert2mp4.conf or
 # on command line will be set to the values below.
@@ -70,7 +74,7 @@ my %opt = (
 	nice_args => "",
 
 	# Directory for intermediate files
-	path_tmpdir => "/content/prod/rstar/tmp",
+	path_tmpdir => "/content/$env/rstar/tmp",
 
 	# Video encoding options
 	video_preset  => "default",  # ffmpeg libx264 preset
@@ -120,8 +124,6 @@ Log::Log4perl->init("$app_home/conf/log.conf");
 my $log = get_logger();
 
 $SIG{__WARN__} = sub { $log->logdie(@_) };
-
-my $host = hostname();
 
 my $is_cygwin = $^O =~ /cygwin/i;
 

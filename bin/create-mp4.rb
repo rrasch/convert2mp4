@@ -3,6 +3,7 @@
 require 'logger'
 require 'open3'
 require 'optparse'
+require 'socket'
 
 def do_cmd(cmd, log)
   log.debug "Running '#{cmd}'"
@@ -14,6 +15,8 @@ def do_cmd(cmd, log)
   end
   return output
 end
+
+env = /^d/ =~ Socket.gethostname ? "dev" : "prod"
 
 options = {
   :profile => "movie-scenes",
@@ -86,7 +89,7 @@ ids.each do |id|
       cmd << " -q"
     end
     cmd << " --profiles_path profiles-#{options[:profile]}.xml"\
-           " --path_tmpdir /content/prod/rstar/tmp"\
+           " --path_tmpdir /content/#{env}/rstar/tmp"\
            " #{options[:extra_args]} #{input_file} #{output_prefix}"\
            " >> #{log_file} 2>&1"
     do_cmd(cmd, logger)
@@ -97,4 +100,3 @@ ids.each do |id|
     end
   end
 end
-
