@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -82,13 +84,13 @@ def get_video_height(input_file):
         )
         return int(height_str)
     except FileNotFoundError:
-        logging.error("Mediainfo not found")
+        logger.error("Mediainfo not found")
         sys.exit(1)
     except subprocess.CalledProcessError:
-        logging.error("Failed to run mediainfo")
+        logger.error("Failed to run mediainfo")
         sys.exit(1)
     except ValueError:
-        logging.error(f"Invalid height returned: {height_str}")
+        logger.error(f"Invalid height returned: {height_str}")
         sys.exit(1)
 
 
@@ -96,7 +98,7 @@ def build_command(args):
     input_path = Path(args.input)
 
     if not input_path.exists():
-        logging.error(f"File not found: {input_path}")
+        logger.error(f"File not found: {input_path}")
         sys.exit(1)
 
     cmd = ["HandBrakeCLI", "-i", str(input_path)]
@@ -146,7 +148,7 @@ def shlex_join(split_command):
 
 def run(cmd, quiet=False, log_file=None):
     try:
-        logging.info("Running command: %s", shlex_join(cmd))
+        logger.info("Running command: %s", shlex_join(cmd))
 
         run_args = {
             "check": True,
@@ -160,18 +162,18 @@ def run(cmd, quiet=False, log_file=None):
         else:
             result = subprocess.run(cmd, stdout=subprocess.PIPE, **run_args)
             if not quiet and result.stdout:
-                logging.info("\n%s", result.stdout)
+                logger.info("\n%s", result.stdout)
 
         return result
 
     except subprocess.CalledProcessError as e:
-        logging.error("Error during conversion")
+        logger.error("Error during conversion")
         if e.stdout:
-            logging.error("\n%s", e.stdout)
+            logger.error("\n%s", e.stdout)
         sys.exit(e.returncode)
 
     except FileNotFoundError:
-        logging.error("Command not found: %s", cmd[0])
+        logger.error("Command not found: %s", cmd[0])
         sys.exit(1)
 
 
