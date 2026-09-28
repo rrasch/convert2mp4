@@ -88,6 +88,10 @@ fi
 %{_bindir}/*
 
 %changelog
+* Mon Sep 28 2026 Rasan Rasch - 3.2.4-1
+- Update to version 3.2.4
+- Remove hard-coded tmp directory
+
 * Fri Mar 20 2026 Rasan Rasch - 3.2.3-1
 - 3.2.3
 - Add convert_iso script to convert dvd iso's
